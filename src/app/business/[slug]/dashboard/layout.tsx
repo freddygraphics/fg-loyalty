@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { ReactNode } from "react";
 
-export default function BusinessDashboardLayout({
+export default async function BusinessDashboardLayout({
   children,
   params,
 }: {
-  children: React.ReactNode;
-  params: { slug: string };
+  children: ReactNode;
+  params: Promise<{
+    slug: string;
+  }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
 
   return (
     <div className="min-h-screen flex bg-gray-100">

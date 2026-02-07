@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       earnStep,
       limitMode,
       redeemMode,
-      userId, // el usuario logueado
+      userId, // 👈 usuario creador
     } = body;
 
     if (!name || !slug || !pin || !userId) {
@@ -27,27 +27,23 @@ export async function POST(req: Request) {
     // 🔒 Hash PIN
     const pinHash = await bcrypt.hash(pin, 10);
 
-    // 🏪 Crear business
+    // 🏪 Crear business (OWNER OBLIGATORIO)
     const business = await prisma.business.create({
       data: {
         name,
         slug,
+        pinHash,
         goal: goal ?? 50,
         earnStep: earnStep ?? 5,
         limitMode: limitMode ?? "cap",
         redeemMode: redeemMode ?? "reset",
-        pinHash,
+
+        // ✅ ESTO ES LO QUE FALTABA
+        ownerId: userId,
       },
     });
 
-    // 👤 Asignar owner
-    await prisma.businessUser.create({
-      data: {
-        businessId: business.id,
-        userId,
-        role: "owner",
-      },
-    });
+    // 👤 Relación roles (extra, correcto)
 
     return NextResponse.json({
       success: true,

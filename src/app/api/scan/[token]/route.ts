@@ -5,33 +5,54 @@ export async function POST(
   context: { params: Promise<{ token: string }> },
 ) {
   try {
-    // 🔑 await params
     const { token } = await context.params;
 
     const card = await prisma.loyaltyCard.findUnique({
       where: { token },
+      include: {
+        business: true,
+        customer: true,
+      },
     });
 
-    if (!card || card.status !== "ACTIVE") {
+    // ❌ tarjeta inválida o inactiva
+    if (!card || !card.active) {
       return Response.json({ error: "Tarjeta inválida" }, { status: 400 });
     }
 
-    const nextVisits = card.visits + 1;
+    // ➕ sumar puntos según configuración del negocio
+    const pointsToAdd = card.business.earnStep;
+    const newPoints = card.points + pointsToAdd;
 
-    const updated = await prisma.loyaltyCard.update({
-      where: { token },
-      data: {
-        visits: { increment: 1 },
-        lastVisitAt: new Date(),
-        logs: { create: {} },
-        status: nextVisits >= card.goal ? "READY" : "ACTIVE",
-      },
-      include: { customer: true },
+    // 🎯 llegó al goal
+    const reachedGoal = newPoints >= card.business.goal;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedCard = await tx.loyaltyCard.update({
+        where: { id: card.id },
+        data: {
+          points: newPoints,
+          active: !reachedGoal, // se desactiva al completar
+        },
+      });
+
+      await tx.pointTransaction.create({
+        data: {
+          businessId: card.businessId,
+          cardId: card.id,
+          type: "earn",
+          points: pointsToAdd,
+        },
+      });
+
+      return updatedCard;
     });
 
     return Response.json({
-      card: updated,
-      completed: updated.status === "COMPLETED",
+      success: true,
+      points: updated.points,
+      completed: !updated.active,
+      customer: card.customer,
     });
   } catch (error) {
     console.error("❌ SCAN ERROR:", error);

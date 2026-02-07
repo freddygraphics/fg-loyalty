@@ -1,14 +1,16 @@
 import prisma from "@/lib/db";
-
 import QRCode from "react-qr-code";
 
 export default async function CardPage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
+  // 🔑 await params
+  const { token } = await params;
+
   const card = await prisma.loyaltyCard.findUnique({
-    where: { token: params.token },
+    where: { token },
     include: {
       customer: true,
       business: true,
@@ -24,6 +26,8 @@ export default async function CardPage({
   }
 
   const scanUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/scan/${card.token}`;
+
+  const completed = card.points >= card.business.goal;
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -43,18 +47,18 @@ export default async function CardPage({
 
         {/* 🔹 Progreso */}
         <p className="text-center text-lg font-semibold">
-          {card.visits} / {card.goal} visitas
+          {card.points} / {card.business.goal} puntos
         </p>
 
-        {/* 🔹 ESTADO READY */}
-        {card.status === "READY" && (
+        {/* 🔹 ESTADO COMPLETADO */}
+        {completed && card.active && (
           <div className="mt-3 rounded bg-green-600/20 p-2 text-center text-sm">
             🎉 ¡Premio listo! Muéstralo en caja para canjear
           </div>
         )}
 
-        {/* 🔹 ESTADO REDEEMED */}
-        {card.status === "REDEEMED" && (
+        {/* 🔹 ESTADO CANJEADO / CERRADO */}
+        {!card.active && (
           <div className="mt-3 rounded bg-gray-600/20 p-2 text-center text-sm">
             ✅ Premio ya canjeado
           </div>

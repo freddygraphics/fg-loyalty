@@ -1,23 +1,20 @@
 import { NextResponse } from "next/server";
+import * as bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
-import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    // ⚠️ TEMPORAL: owner fijo (admin)
+    const ownerId = 1;
 
-    const {
-      name,
-      slug,
-      pin,
-      goal = 50,
-      earnStep = 5,
-      limitMode = "cap",
-      redeemMode = "reset",
-    } = body;
+    const { name, slug, pin, goal, earnStep, limitMode, redeemMode } =
+      await req.json();
 
     if (!name || !slug || !pin) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Faltan campos requeridos" },
+        { status: 400 },
+      );
     }
 
     const pinHash = await bcrypt.hash(pin, 10);
@@ -31,23 +28,17 @@ export async function POST(req: Request) {
         earnStep,
         limitMode,
         redeemMode,
+        ownerId,
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      slug: business.slug,
-    });
-  } catch (error: any) {
-    console.error("❌ CREATE BUSINESS ERROR:", error);
+    return NextResponse.json(business, { status: 201 });
+  } catch (error) {
+    console.error("❌ Error creando business:", error);
 
-    if (error.code === "P2002") {
-      return NextResponse.json(
-        { error: "Slug already exists" },
-        { status: 409 },
-      );
-    }
-
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 },
+    );
   }
 }
