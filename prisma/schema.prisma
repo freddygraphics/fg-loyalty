@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TxType {
+  earn
+  redeem
+  adjust
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business  Business?
+  tx        PointTransaction[]   // 👈 RELACIÓN FALTANTE
+
+  @@map("user")
+}
+
+
+model Business {
+  id         Int      @id @default(autoincrement())
+  name       String
+  slug       String   @unique
+
+  ownerId    Int      @unique
+  owner      User     @relation(fields: [ownerId], references: [id])
+
+  goal       Int      @default(50)
+  earnStep  Int      @default(5)
+  limitMode String   @default("cap")     // cap | block
+  redeemMode String  @default("reset")   // reset | carry
+  pinHash   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers Customer[]
+  cards     LoyaltyCard[]
+  tx        PointTransaction[]
+
+  @@map("business")
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  name       String
+  phone      String
+  email      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cards    LoyaltyCard[]
+
+  @@unique([businessId, phone])
+  @@map("customer")
+}
+
+model LoyaltyCard {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  customerId Int
+
+  token  String  @unique
+  points Int     @default(0)
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tx       PointTransaction[]
+
+  @@map("loyalty_card")
+}
+
+model PointTransaction {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  cardId     Int
+  userId     Int?      // futuro: staff
+  type       TxType
+  points     Int
+  note       String?
+  createdAt  DateTime @default(now())
+
+  business Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  card     LoyaltyCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user     User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("point_transaction")
+}
