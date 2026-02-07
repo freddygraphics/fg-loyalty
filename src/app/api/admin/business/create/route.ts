@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import * as bcrypt from "bcryptjs";
@@ -7,7 +8,6 @@ import prisma from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
-    // ⚠️ TEMPORAL: owner fijo (admin)
     const ownerId = 1;
 
     const { name, slug, pin, goal, earnStep, limitMode, redeemMode } =
@@ -38,7 +38,6 @@ export async function POST(req: Request) {
     return NextResponse.json(business, { status: 201 });
   } catch (error) {
     console.error("❌ Error creando business:", error);
-
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 },
