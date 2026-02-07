@@ -1,5 +1,7 @@
-import prisma from "@/lib/db";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
+import prisma from "@/lib/db";
 import { verifyPin } from "@/lib/pin";
 
 export async function POST(req: Request) {
