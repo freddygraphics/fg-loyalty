@@ -3,17 +3,17 @@ import prisma from "@/lib/db";
 
 export async function POST(
   req: Request,
-  { params }: { params: { slug: string; token: string } },
+  context: { params: Promise<{ slug: string; token: string }> },
 ) {
   try {
-    const { slug, token } = params;
+    const { slug, token } = await context.params;
 
     // 1️⃣ Buscar tarjeta + negocio
     const card = await prisma.loyaltyCard.findFirst({
       where: {
         token,
-        business: { slug },
         active: true,
+        business: { slug },
       },
       include: {
         business: true,
@@ -35,25 +35,25 @@ export async function POST(
 
     let newPoints = current + step;
 
-    // 2️⃣ APLICAR LÍMITE
+    // 2️⃣ Límite
     if (business.limitMode === "cap" && newPoints > goal) {
       newPoints = goal;
     }
 
-    // 3️⃣ Actualizar puntos
+    // 3️⃣ Update card
     await prisma.loyaltyCard.update({
       where: { id: card.id },
       data: { points: newPoints },
     });
 
-    // 4️⃣ Registrar transacción
+    // 4️⃣ Transaction
     await prisma.pointTransaction.create({
       data: {
         businessId: business.id,
         cardId: card.id,
         type: "earn",
         points: step,
-        note: "Suma de puntos",
+        note: "Earn points",
       },
     });
 

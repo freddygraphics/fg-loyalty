@@ -3,10 +3,11 @@ import prisma from "@/lib/db";
 
 export async function POST(
   req: Request,
-  { params }: { params: { slug: string; token: string } },
+  context: { params: Promise<{ slug: string; token: string }> },
 ) {
   try {
-    const { slug, token } = params;
+    // 🔑 IMPORTANTE: await params
+    const { slug, token } = await context.params;
 
     // 1️⃣ Buscar tarjeta + negocio
     const card = await prisma.loyaltyCard.findFirst({
