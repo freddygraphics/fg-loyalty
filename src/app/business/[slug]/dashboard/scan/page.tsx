@@ -10,7 +10,7 @@ export default function ScanPage({ params }: { params: { slug: string } }) {
       </p>
 
       <Link
-        href={`/business/${params.slug}/scan`}
+        href={`/business/${params.slug}/dashboard/scan`}
         className="inline-block bg-black text-white px-4 py-2 rounded"
       >
         Ir al scanner
