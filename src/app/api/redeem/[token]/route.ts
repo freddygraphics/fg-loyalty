@@ -1,31 +1,72 @@
+import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function POST(
   _req: Request,
-  { params }: { params: { token: string } },
+  context: { params: Promise<{ token: string }> },
 ) {
-  const card = await prisma.loyaltyCard.findUnique({
-    where: { token: params.token },
-  });
+  try {
+    // 🔑 await params
+    const { token } = await context.params;
 
-  if (!card) {
-    return Response.json({ error: "Tarjeta no encontrada" }, { status: 404 });
+    const card = await prisma.loyaltyCard.findFirst({
+      where: {
+        token,
+        active: true,
+      },
+      include: {
+        business: true,
+      },
+    });
+
+    if (!card) {
+      return NextResponse.json(
+        { error: "Tarjeta no encontrada" },
+        { status: 404 },
+      );
+    }
+
+    const goal = card.business.goal;
+    const current = card.points;
+
+    if (current < goal) {
+      return NextResponse.json(
+        { error: "No alcanza la meta para redimir" },
+        { status: 400 },
+      );
+    }
+
+    let newPoints = current;
+
+    if (card.business.redeemMode === "reset") {
+      newPoints = 0;
+    }
+
+    if (card.business.redeemMode === "subtract") {
+      newPoints = current - goal;
+    }
+
+    await prisma.loyaltyCard.update({
+      where: { id: card.id },
+      data: { points: newPoints },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        businessId: card.businessId,
+        cardId: card.id,
+        type: "redeem",
+        points: -goal,
+        note: "Redención",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      newPoints,
+    });
+  } catch (error) {
+    console.error("❌ REDEEM (token) ERROR:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  if (card.status !== "READY") {
-    return Response.json(
-      { error: "Tarjeta no lista para canje" },
-      { status: 400 },
-    );
-  }
-
-  const redeemed = await prisma.loyaltyCard.update({
-    where: { token: params.token },
-    data: {
-      status: "REDEEMED",
-      redeemedAt: new Date(),
-    },
-  });
-
-  return Response.json({ success: true, card: redeemed });
 }
