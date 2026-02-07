@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import prisma from "@/lib/db";
 
 import bcrypt from "bcryptjs";
@@ -20,3 +23,4 @@ export async function POST(req: Request) {
 
   return Response.json({ ok: true });
 }
+
