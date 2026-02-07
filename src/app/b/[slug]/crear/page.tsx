@@ -4,8 +4,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CreateClientAndCardPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
   const [error, setError] = useState<string | null>(null);
+
+  const slug = params?.slug;
 
   useEffect(() => {
     if (!slug) return;
@@ -17,6 +19,15 @@ export default function CreateClientAndCardPage() {
       })
       .catch(() => setError("Negocio no encontrado"));
   }, [slug]);
+
+  // 👇 el return condicional va DESPUÉS de los hooks
+  if (!slug) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p>Cargando…</p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
