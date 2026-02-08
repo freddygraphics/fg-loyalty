@@ -6,7 +6,7 @@ import QRCode from "react-qr-code";
 
 export default function JoinPage() {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug;
+  const slug = params?.slug; // ✅ FIX REAL
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -14,6 +14,15 @@ export default function JoinPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cardToken, setCardToken] = useState<string | null>(null);
+
+  // ⛔ Evita crash en build / hydration
+  if (!slug) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Cargando…
+      </div>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,11 +40,9 @@ export default function JoinPage() {
 
       if (!res.ok) {
         setError(data.error || "Error al registrarse");
-        setLoading(false);
         return;
       }
 
-      // 👉 GUARDAMOS EL TOKEN EN VEZ DE REDIRIGIR
       setCardToken(data.cardToken);
     } catch {
       setError("Error de conexión");
@@ -72,6 +79,7 @@ export default function JoinPage() {
           >
             Descargar / Imprimir
           </button>
+
           <a
             href={`/c/${cardToken}`}
             className="mt-3 block w-full border border-black text-black py-2 rounded font-medium"

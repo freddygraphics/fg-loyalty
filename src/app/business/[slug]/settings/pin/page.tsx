@@ -4,7 +4,8 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 export default function PinSetupPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
   const [pin, setPin] = useState("");
   const [msg, setMsg] = useState("");
 

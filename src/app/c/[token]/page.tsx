@@ -14,7 +14,7 @@ type CardData = {
 
 export default function ClientCardPage() {
   const params = useParams<{ token: string }>();
-  const token = params.token;
+  const token = params?.token;
 
   const [data, setData] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,14 +24,14 @@ export default function ClientCardPage() {
 
     fetch(`/api/card/${token}`)
       .then((res) => res.json())
-      .then((json) => {
+      .then((json: CardData) => {
         setData(json);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [token]);
 
-  if (loading) {
+  if (!token || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         Cargando...
@@ -39,7 +39,7 @@ export default function ClientCardPage() {
     );
   }
 
-  if (!data || (data as any).error) {
+  if (!data) {
     return (
       <div className="flex h-screen items-center justify-center">
         Tarjeta no encontrada
@@ -52,6 +52,7 @@ export default function ClientCardPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       <h1 className="text-xl font-bold mb-1">{data.businessName} Rewards</h1>
+
       <p className="text-sm text-gray-600 mb-4">Cliente: {data.customerName}</p>
 
       {/* QR */}
