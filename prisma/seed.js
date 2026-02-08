@@ -1,44 +1,62 @@
+// prisma/seed.js
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Running seed...");
+  console.log("🌱 Seeding Fideliza...");
 
-  // 1️⃣ Crear usuario demo
-  const passwordHash = await bcrypt.hash("123456", 10);
-
-  const user = await prisma.user.create({
+  // 1️⃣ Crear usuario dueño
+  const owner = await prisma.user.create({
     data: {
       name: "Demo Owner",
-      email: "demo@loyalty.com",
-      password: passwordHash,
+      email: "owner@demo.com",
+      password: "hashed-password",
     },
   });
 
-  // 2️⃣ Crear negocio demo (ligado al user)
-  const pinHash = await bcrypt.hash("1234", 10);
-
-  await prisma.business.create({
+  // 2️⃣ Crear negocio
+  const business = await prisma.business.create({
     data: {
-      name: "Demo Business",
-      slug: "demo-business",
-      ownerId: user.id, // 👈 CLAVE
-      goal: 50,
-      earnStep: 5,
+      name: "Demo Coffee Shop",
+      slug: "demo-coffee",
+      ownerId: owner.id,
+      goal: 10,
+      earnStep: 1,
       limitMode: "cap",
       redeemMode: "reset",
-      pinHash,
     },
   });
 
-  console.log("✅ Seed completed");
+  // 3️⃣ Crear cliente
+  const customer = await prisma.customer.create({
+    data: {
+      businessId: business.id,
+      name: "Juan Perez",
+      phone: "5551234567",
+    },
+  });
+
+  // 4️⃣ Crear tarjeta con QR
+  const card = await prisma.loyaltyCard.create({
+    data: {
+      businessId: business.id,
+      customerId: customer.id,
+      token: "E48FA269705D",
+      points: 0,
+      active: true,
+    },
+  });
+
+  console.log("✅ Seed completado");
+  console.log("🏪 Business:", business.name);
+  console.log("👤 Customer:", customer.name);
+  console.log("🔑 QR Token:", card.token);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seed error:", e);
+    console.error("❌ Seed error", e);
     process.exit(1);
   })
   .finally(async () => {
