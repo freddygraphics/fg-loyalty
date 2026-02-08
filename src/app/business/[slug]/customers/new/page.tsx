@@ -1,15 +1,23 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import QRCode from "react-qr-code";
 
+type CreateCustomerResult = {
+  scanUrl: string;
+  customer: {
+    name: string;
+  };
+};
+
 export default function NewCustomerPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
 
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<CreateCustomerResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,31 +26,62 @@ export default function NewCustomerPage() {
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/customers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        businessSlug: slug,
-        name,
-        contact,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.error || "Error");
+    if (!slug) {
+      setError("Negocio no válido");
       setLoading(false);
       return;
     }
 
-    setResult(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessSlug: slug,
+          name,
+          contact,
+        }),
+      });
+
+      const data = (await res.json()) as {
+        error?: string;
+      } & CreateCustomerResult;
+
+      if (!res.ok) {
+        setError(data.error || "Error");
+        setLoading(false);
+        return;
+      }
+
+      setResult({
+        scanUrl: data.scanUrl,
+        customer: { name: data.customer?.name ?? name },
+      });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error inesperado");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const fullUrl = useMemo(() => {
+    if (!result) return "";
+    // ✅ evita usar window directamente si por alguna razón se evalúa antes
+    if (typeof window === "undefined") return result.scanUrl;
+    return `${window.location.origin}${result.scanUrl}`;
+  }, [result]);
+
+  if (!slug) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="w-full max-w-md rounded-xl bg-white p-6 shadow text-center">
+          <p>Cargando…</p>
+        </div>
+      </main>
+    );
   }
 
   if (result) {
-    const fullUrl = `${window.location.origin}${result.scanUrl}`;
-
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
         <div className="w-full max-w-md rounded-xl bg-white p-6 shadow text-center">

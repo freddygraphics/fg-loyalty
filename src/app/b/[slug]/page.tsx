@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 
 export default function RegisterPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
 
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
@@ -16,6 +17,12 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!slug) {
+      setError("Negocio no válido");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -36,11 +43,23 @@ export default function RegisterPage() {
       }
 
       setWalletUrl(`/card/${data.token}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Ocurrió un error inesperado");
+      }
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!slug) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p>Cargando…</p>
+      </main>
+    );
   }
 
   return (
