@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import crypto from "crypto";
 
-// 🔐 Genera token único para QR
 async function generateUniqueToken(): Promise<string> {
   let token: string;
 
@@ -26,9 +25,11 @@ export async function POST(
 ) {
   try {
     const { slug } = await context.params;
+
     const body = await req.json();
 
-    let { name, phone, email } = body as {
+    // ✅ USAR CONST (no se reasignan)
+    const { name, phone, email } = body as {
       name?: string;
       phone?: string;
       email?: string;
@@ -42,8 +43,8 @@ export async function POST(
       );
     }
 
-    // ✅ Normalizar teléfono
-    phone = phone.replace(/\D/g, "");
+    // ✅ Normalizar teléfono (aquí sí creamos variable nueva)
+    const normalizedPhone = phone.replace(/\D/g, "");
 
     // 1️⃣ Buscar negocio
     const business = await prisma.business.findUnique({
@@ -57,18 +58,18 @@ export async function POST(
       );
     }
 
-    // 2️⃣ Buscar cliente existente + tarjetas
+    // 2️⃣ Buscar cliente existente
     const existing = await prisma.customer.findFirst({
       where: {
         businessId: business.id,
-        phone,
+        phone: normalizedPhone,
       },
       include: {
-        cards: true, // ✅ coincide con schema
+        cards: true,
       },
     });
 
-    // 🔁 Si ya existe, devolver su tarjeta
+    // 🔁 Cliente duplicado → devolver su QR
     if (existing?.cards?.length) {
       const card = existing.cards[0];
 
@@ -85,7 +86,7 @@ export async function POST(
     const customer = await prisma.customer.create({
       data: {
         name,
-        phone,
+        phone: normalizedPhone,
         email,
         businessId: business.id,
       },

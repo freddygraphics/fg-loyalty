@@ -1,37 +1,32 @@
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   context: { params: Promise<{ token: string }> },
 ) {
-  try {
-    const { token } = await context.params;
+  const { token } = await context.params;
 
-    const card = await prisma.loyaltyCard.findUnique({
-      where: { token },
-      include: {
-        customer: true,
-        business: true,
-      },
-    });
+  const card = await prisma.loyaltyCard.findUnique({
+    where: { token },
+    include: {
+      customer: true,
+      business: true,
+    },
+  });
 
-    if (!card || !card.active) {
-      return NextResponse.json({ error: "Card not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      token: card.token,
-      points: card.points,
-      goal: card.business.goal,
-      customerName: card.customer.name,
-      businessName: card.business.name,
-    });
-  } catch (error) {
-    console.error("❌ CARD ERROR:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  if (!card) {
+    return NextResponse.json({ error: "Card not found" }, { status: 404 });
   }
+
+  const remaining = Math.max(card.business.goal - card.points, 0);
+
+  return NextResponse.json({
+    token: card.token,
+    points: card.points,
+    remaining,
+    customerName: card.customer.name,
+    businessName: card.business.name,
+    goal: card.business.goal,
+  });
 }
