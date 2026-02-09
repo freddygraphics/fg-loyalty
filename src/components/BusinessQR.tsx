@@ -1,9 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 
 export default function BusinessQR({ slug }: { slug: string }) {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL}/join/${slug}`;
+  const [url, setUrl] = useState<string>("");
+
+  useEffect(() => {
+    // ✅ URL REAL DONDE CORRE LA APP
+    setUrl(`${window.location.origin}/join/${slug}`);
+  }, [slug]);
+
+  // Evita render hasta tener la URL
+  if (!url) return null;
 
   return (
     <div className="border rounded-xl p-6 bg-white">
