@@ -1,5 +1,6 @@
 // prisma/seed.js
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -7,11 +8,14 @@ async function main() {
   console.log("🌱 Seeding Fideliza...");
 
   // 1️⃣ Crear usuario dueño
+  const passwordHash = await bcrypt.hash("demo1234", 10);
+  const pinHash = await bcrypt.hash("1234", 10);
+
   const owner = await prisma.user.create({
     data: {
       name: "Demo Owner",
       email: "owner@demo.com",
-      password: "hashed-password",
+      passwordHash,
     },
   });
 
@@ -20,7 +24,8 @@ async function main() {
     data: {
       name: "Demo Coffee Shop",
       slug: "demo-coffee",
-      ownerId: owner.id,
+      ownerId: owner.id, // ✅ ahora sí existe
+      pinHash, // ✅ obligatorio
       goal: 10,
       earnStep: 1,
       limitMode: "cap",
@@ -50,6 +55,7 @@ async function main() {
 
   console.log("✅ Seed completado");
   console.log("🏪 Business:", business.name);
+  console.log("👤 Owner:", owner.email);
   console.log("👤 Customer:", customer.name);
   console.log("🔑 QR Token:", card.token);
 }

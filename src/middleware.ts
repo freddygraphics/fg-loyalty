@@ -4,14 +4,10 @@ import type { NextRequest } from "next/server";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Solo proteger dashboard del business
+  // Solo proteger dashboard si el negocio TIENE PIN
   if (pathname.startsWith("/business/") && pathname.includes("/dashboard")) {
-    const session = req.cookies.get("business_session");
-
-    if (!session) {
-      const slug = pathname.split("/")[2];
-      return NextResponse.redirect(new URL(`/business/${slug}/login`, req.url));
-    }
+    // ⚠️ por ahora no protegemos nada
+    return NextResponse.next();
   }
 
   return NextResponse.next();

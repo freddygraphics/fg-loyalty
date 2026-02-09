@@ -14,43 +14,47 @@ enum TxType {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("OWNER")
 
-  business  Business?
-  tx        PointTransaction[]   // 👈 RELACIÓN FALTANTE
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business     Business?
+  tx           PointTransaction[]
 
   @@map("user")
 }
 
-
 model Business {
-  id         Int      @id @default(autoincrement())
-  name       String
-  slug       String   @unique
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
 
-  ownerId    Int      @unique
-  owner      User     @relation(fields: [ownerId], references: [id])
+  ownerId     Int      @unique
+  owner       User     @relation(fields: [ownerId], references: [id])
 
-  goal       Int      @default(50)
-  earnStep  Int      @default(5)
-  limitMode String   @default("cap")     // cap | block
-  redeemMode String  @default("reset")   // reset | carry
-  pinHash   String?
+  // 🔐 PIN SOLO PARA SCAN / POS
+  pinHash     String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  goal        Int      @default(50)
+  earnStep    Int      @default(5)
+  limitMode   String   @default("cap")
+  redeemMode  String   @default("reset")
 
-  customers Customer[]
-  cards     LoyaltyCard[]
-  tx        PointTransaction[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customers   Customer[]
+  cards       LoyaltyCard[]
+  tx          PointTransaction[]
 
   @@map("business")
 }
+
 
 model Customer {
   id         Int      @id @default(autoincrement())
