@@ -1,25 +1,44 @@
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { slug: string } },
+  req: NextRequest,
+  context: { params: Promise<{ slug: string }> },
 ) {
-  const tx = await prisma.pointTransaction.findMany({
-    where: {
-      business: { slug: params.slug },
-      type: "earn", // 👈 SOLO scans
-    },
-    include: {
-      card: {
-        include: {
-          customer: true,
+  try {
+    // ✅ CLAVE PARA VERCEL
+    const { slug } = await context.params;
+
+    const transactions = await prisma.pointTransaction.findMany({
+      where: {
+        business: {
+          slug,
         },
       },
-      user: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 50,
+      include: {
+        card: {
+          include: {
+            customer: true,
+          },
+        },
+      },
+    });
 
-  return Response.json(tx);
+    return NextResponse.json(
+      transactions.map((tx) => ({
+        id: tx.id,
+        customerName: tx.card.customer.name,
+        points: tx.points,
+        type: tx.type,
+        createdAt: tx.createdAt,
+      })),
+    );
+  } catch (err) {
+    console.error("❌ Transactions error", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

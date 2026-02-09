@@ -1,77 +1,53 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { slug: string } },
+  req: NextRequest,
+  context: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const slug = params.slug;
+    // ✅ CLAVE: await params
+    const { slug } = await context.params;
 
     const business = await prisma.business.findUnique({
       where: { slug },
-    });
-
-    if (!business) {
-      return NextResponse.json(
-        { error: "BUSINESS_NOT_FOUND" },
-        { status: 404 },
-      );
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const scansToday = await prisma.pointTransaction.count({
-      where: {
-        businessId: business.id,
-        createdAt: { gte: today },
-        type: "earn",
-      },
-    });
-
-    const pointsToday = await prisma.pointTransaction.aggregate({
-      where: {
-        businessId: business.id,
-        createdAt: { gte: today },
-        type: "earn",
-      },
-      _sum: { points: true },
-    });
-
-    const customers = await prisma.customer.count({
-      where: { businessId: business.id },
-    });
-
-    const recentActivity = await prisma.pointTransaction.findMany({
-      where: {
-        businessId: business.id, // 🔐 solo este negocio
-      },
-      orderBy: { createdAt: "desc" },
-      take: 5,
       include: {
-        card: {
+        customers: true,
+        tx: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
           include: {
-            customer: true,
+            card: {
+              include: {
+                customer: true,
+              },
+            },
           },
         },
       },
     });
 
+    if (!business) {
+      return NextResponse.json(
+        { error: "Business not found" },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json({
-      scansToday,
-      pointsToday: pointsToday._sum.points || 0,
-      customers,
+      scansToday: 0,
+      pointsToday: 0,
+      customers: business.customers.length,
       goal: business.goal,
-      recentActivity: recentActivity.map((tx) => ({
-        id: tx.id,
-        customerName: tx.card.customer.name,
-        points: tx.points,
-        createdAt: tx.createdAt,
+      recentActivity: business.tx.map((t) => ({
+        id: t.id,
+        customerName: t.card.customer.name,
+        points: t.points,
+        createdAt: t.createdAt,
       })),
     });
   } catch (err) {
-    console.error("METRICS ERROR", err);
-    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+    console.error("❌ Metrics error", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

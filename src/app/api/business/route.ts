@@ -1,19 +1,17 @@
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import bcrypt from "bcryptjs";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { name, slug, goal, userId } = await req.json();
+    const body = await req.json();
+    const { name, slug, goal, ownerId, pin } = body;
 
-    if (!name || !slug || !userId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+    if (!name || !slug || !ownerId || !pin) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
+
+    const pinHash = await bcrypt.hash(pin, 10);
 
     const business = await prisma.business.create({
       data: {
@@ -21,16 +19,19 @@ export async function POST(req: Request) {
         slug,
         goal: Number(goal) || 10,
 
-        // ✅ OBLIGATORIO
-        ownerId: userId,
+        // ✅ RELACIÓN CORRECTA
+        owner: {
+          connect: { id: Number(ownerId) },
+        },
+
+        // ✅ CAMPO OBLIGATORIO
+        pinHash,
       },
     });
 
-    return NextResponse.json(business, { status: 201 });
-  } catch (error) {
-    console.error("❌ CREATE BUSINESS ERROR:", error);
-
+    return NextResponse.json(business);
+  } catch (err) {
+    console.error("❌ Create business error", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-

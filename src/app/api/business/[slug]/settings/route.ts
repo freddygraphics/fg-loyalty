@@ -1,21 +1,30 @@
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { NextResponse } from "next/server";
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { slug: string } },
+  req: NextRequest,
+  context: { params: Promise<{ slug: string }> },
 ) {
-  const body = await req.json();
+  try {
+    // ✅ CLAVE: await params
+    const { slug } = await context.params;
 
-  const business = await prisma.business.update({
-    where: { slug: params.slug },
-    data: {
-      goal: body.goal,
-      earnStep: body.earnStep,
-      limitMode: body.limitMode,
-      redeemMode: body.redeemMode,
-    },
-  });
+    const body = await req.json();
 
-  return NextResponse.json(business);
+    const business = await prisma.business.update({
+      where: { slug },
+      data: {
+        name: body.name,
+        goal: body.goal,
+        earnStep: body.earnStep,
+        limitMode: body.limitMode,
+        redeemMode: body.redeemMode,
+      },
+    });
+
+    return NextResponse.json(business);
+  } catch (err) {
+    console.error("❌ Settings update error", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
