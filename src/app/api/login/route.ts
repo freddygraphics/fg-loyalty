@@ -8,6 +8,7 @@ const ownerLoginSelect = Prisma.validator<Prisma.UserSelect>()({
   passwordHash: true,
   business: {
     select: {
+      id: true,
       slug: true,
     },
   },
@@ -50,9 +51,9 @@ export async function POST(req: Request) {
         { status: 404 },
       );
     }
-
     const res = NextResponse.json({
       success: true,
+      businessId: user.business.id,
       slug: user.business.slug,
     });
 

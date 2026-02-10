@@ -1,66 +1,103 @@
-import { NextResponse } from "next/server";
-import prisma from "../../../lib/db";
+import { NextRequest } from "next/server";
+import prisma from "@/lib/db";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { qr } = await req.json();
+    const body = await req.json();
+    const { qr } = body;
 
-    if (!qr) {
-      return NextResponse.json({ error: "QR_REQUIRED" }, { status: 400 });
+    // 1️⃣ Validar QR
+    if (!qr || typeof qr !== "string") {
+      return Response.json({ error: "QR_REQUIRED" }, { status: 400 });
     }
 
-    // 🔍 Buscar la tarjeta real
+    // 2️⃣ Buscar tarjeta
     const card = await prisma.loyaltyCard.findUnique({
       where: { token: qr },
       include: {
-        customer: true,
         business: true,
       },
     });
 
     if (!card) {
-      return NextResponse.json({ error: "INVALID_QR" }, { status: 404 });
+      return Response.json({ error: "INVALID_QR" }, { status: 404 });
     }
 
-    if (!card.active) {
-      return NextResponse.json({ error: "CARD_INACTIVE" }, { status: 403 });
+    const business = card.business;
+
+    // 3️⃣ Validar configuración
+    if (!business.earnStep || business.earnStep <= 0) {
+      return Response.json({ error: "EARN_STEP_NOT_DEFINED" }, { status: 400 });
     }
 
-    // ➕ Sumar puntos (usando earnStep del negocio)
-    const pointsToAdd = card.business.earnStep;
+    if (!business.goal || business.goal <= 0) {
+      return Response.json({ error: "GOAL_NOT_DEFINED" }, { status: 400 });
+    }
 
-    const updatedCard = await prisma.loyaltyCard.update({
+    // 4️⃣ Anti doble scan (3 segundos)
+    if (card.lastScanAt) {
+      const diff = Date.now() - card.lastScanAt.getTime();
+      if (diff < 3000) {
+        return Response.json({ error: "SCAN_TOO_FAST" }, { status: 429 });
+      }
+    }
+
+    let pointsToAdd = business.earnStep;
+    let reachedGoal = false;
+
+    // 5️⃣ Limit mode: CAP
+    if (business.limitMode === "CAP") {
+      if (card.points >= business.goal) {
+        return Response.json({ error: "GOAL_REACHED" }, { status: 400 });
+      }
+
+      if (card.points + pointsToAdd >= business.goal) {
+        pointsToAdd = business.goal - card.points;
+        reachedGoal = true;
+      }
+    }
+
+    // 6️⃣ Actualizar tarjeta
+    await prisma.loyaltyCard.update({
       where: { id: card.id },
       data: {
-        points: {
-          increment: pointsToAdd,
-        },
+        points: card.points + pointsToAdd,
+        lastScanAt: new Date(),
       },
     });
 
-    // 🧾 Registrar transacción
+    // 7️⃣ Registrar transacción (MODELO CORRECTO)
     await prisma.pointTransaction.create({
       data: {
-        businessId: card.businessId,
+        businessId: business.id,
         cardId: card.id,
         type: "earn",
         points: pointsToAdd,
-        note: "QR scan",
+        note: "Scan earn",
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      customer: {
-        id: card.customer.id,
-        name: card.customer.name,
-      },
+    // 8️⃣ Redeem mode: RESET
+    if (reachedGoal && business.redeemMode === "RESET") {
+      await prisma.loyaltyCard.update({
+        where: { id: card.id },
+        data: { points: 0 },
+      });
+    }
+
+    // 9️⃣ Respuesta clara para la app
+    return Response.json({
+      ok: true,
       pointsAdded: pointsToAdd,
-      totalPoints: updatedCard.points,
-      goal: card.business.goal,
+      totalPoints:
+        reachedGoal && business.redeemMode === "RESET"
+          ? 0
+          : card.points + pointsToAdd,
+      reachedGoal,
+      redeemed: reachedGoal && business.redeemMode === "RESET",
     });
-  } catch (e) {
-    console.error("SCAN ERROR", e);
-    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  } catch (err) {
+    console.error("SCAN API ERROR:", err);
+    return Response.json({ error: "SERVER_ERROR" }, { status: 500 });
   }
 }

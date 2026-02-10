@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import ChangePinModal from "@/components/ChangePinModal";
 
 export default function SettingsPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
-  const [showChangePin, setShowChangePin] = useState(false);
 
   const [form, setForm] = useState({
     goal: 10,
@@ -104,24 +102,6 @@ export default function SettingsPage() {
       </section>
 
       {/* 🔐 SECURITY */}
-      <section>
-        <h2 className="text-lg font-bold mb-4">🔐 Security</h2>
-
-        <div className="bg-white border rounded-lg p-5 space-y-3">
-          <p className="text-sm">PIN: ••••</p>
-
-          <p className="text-xs text-gray-500">
-            The current PIN cannot be viewed for security reasons.
-          </p>
-
-          <button
-            onClick={() => setShowChangePin(true)}
-            className="border px-3 py-2 rounded"
-          >
-            Change PIN
-          </button>
-        </div>
-      </section>
 
       {/* ⚠️ DANGER */}
       <section>
@@ -137,12 +117,6 @@ export default function SettingsPage() {
           </button>
         </div>
       </section>
-      {showChangePin && (
-        <ChangePinModal
-          slug={slug as string}
-          onClose={() => setShowChangePin(false)}
-        />
-      )}
     </div>
   );
 }
