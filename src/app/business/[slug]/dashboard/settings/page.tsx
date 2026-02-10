@@ -19,9 +19,16 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!slug) return;
 
-    fetch(`/api/business/${slug}`)
+    fetch(`/api/business/${slug}/settings`)
       .then((res) => res.json())
-      .then((data) => setForm(data))
+      .then((data) =>
+        setForm({
+          goal: data.goal ?? 10,
+          earnStep: data.earnStep ?? 1,
+          limitMode: data.limitMode ?? "cap",
+          redeemMode: data.redeemMode ?? "reset",
+        }),
+      )
       .finally(() => setLoading(false));
   }, [slug]);
 
