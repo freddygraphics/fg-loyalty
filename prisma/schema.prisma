@@ -14,47 +14,47 @@ enum TxType {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
+  id           Int    @id @default(autoincrement())
   name         String
-  email        String   @unique
+  email        String @unique
   passwordHash String
-  role         String   @default("OWNER")
+  role         String @default("OWNER")
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  business     Business?
-  tx           PointTransaction[]
+  business Business?
+  tx       PointTransaction[]
 
   @@map("user")
 }
 
 model Business {
-  id          Int      @id @default(autoincrement())
-  name        String
-  slug        String   @unique
+  id   Int    @id @default(autoincrement())
+  name String
+  slug String @unique
 
-  ownerId     Int      @unique
-  owner       User     @relation(fields: [ownerId], references: [id])
+  ownerId Int  @unique
+  owner   User @relation(fields: [ownerId], references: [id])
 
   // 🔐 PIN SOLO PARA SCAN / POS
-  pinHash     String
+  pinHash String
 
-  goal        Int      @default(50)
-  earnStep    Int      @default(5)
-  limitMode   String   @default("cap")
-  redeemMode  String   @default("reset")
+  goal       Int    @default(50)
+  earnStep   Int    @default(5)
+  limitMode  String @default("cap")
+  redeemMode String @default("reset")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  customers   Customer[]
-  cards       LoyaltyCard[]
-  tx          PointTransaction[]
+  // ✅ RELACIONES INVERSAS (ESTO FALTABA)
+  customers    Customer[]
+  cards        LoyaltyCard[]
+  transactions PointTransaction[]
 
   @@map("business")
 }
-
 
 model Customer {
   id         Int      @id @default(autoincrement())
@@ -73,7 +73,7 @@ model Customer {
 }
 
 model LoyaltyCard {
-  id         Int      @id @default(autoincrement())
+  id         Int @id @default(autoincrement())
   businessId Int
   customerId Int
 
@@ -95,7 +95,7 @@ model PointTransaction {
   id         Int      @id @default(autoincrement())
   businessId Int
   cardId     Int
-  userId     Int?      // futuro: staff
+  userId     Int? // futuro: staff
   type       TxType
   points     Int
   note       String?

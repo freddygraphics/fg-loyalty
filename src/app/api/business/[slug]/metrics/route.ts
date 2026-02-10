@@ -4,16 +4,16 @@ import prisma from "@/lib/db";
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ slug: string }> },
-) {
+): Promise<Response> {
   try {
-    // ✅ CLAVE: await params
+    // ✅ Next strict: params es Promise
     const { slug } = await context.params;
 
     const business = await prisma.business.findUnique({
       where: { slug },
       include: {
         customers: true,
-        tx: {
+        transactions: {
           orderBy: { createdAt: "desc" },
           take: 5,
           include: {
@@ -35,11 +35,11 @@ export async function GET(
     }
 
     return NextResponse.json({
-      scansToday: 0,
-      pointsToday: 0,
+      scansToday: 0, // TODO: calcular por fecha
+      pointsToday: 0, // TODO: sumar puntos por fecha
       customers: business.customers.length,
       goal: business.goal,
-      recentActivity: business.tx.map((t) => ({
+      recentActivity: business.transactions.map((t) => ({
         id: t.id,
         customerName: t.card.customer.name,
         points: t.points,

@@ -1,26 +1,34 @@
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
+import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
 
 export async function POST(
   req: Request,
   context: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { slug } = await context.params; // 🔑 CLAVE
+    // ✅ CLAVE: esperar params
+    const { slug } = await context.params;
+
+    if (!slug) {
+      return NextResponse.json(
+        { error: "Missing business slug" },
+        { status: 400 },
+      );
+    }
+
     const { pin } = await req.json();
 
     if (!pin || pin.length < 4) {
-      return NextResponse.json({ error: "PIN inválido" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid PIN" }, { status: 400 });
     }
 
     const hash = await bcrypt.hash(pin, 10);
 
     await prisma.business.update({
-      where: { slug },
+      where: { slug }, // ✅ slug válido
       data: {
         pinHash: hash,
       },
@@ -28,7 +36,7 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Error updating PIN:", error);
+    console.error("❌ CHANGE PIN ERROR:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
