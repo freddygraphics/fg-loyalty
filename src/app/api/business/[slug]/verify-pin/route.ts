@@ -1,42 +1,33 @@
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
-import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
+import prisma from "@/lib/db";
 
 export async function POST(
   req: Request,
   context: { params: Promise<{ slug: string }> },
-) {
+): Promise<Response> {
   try {
     const { slug } = await context.params;
     const { pin } = await req.json();
 
-    if (!pin) {
-      return NextResponse.json({ error: "PIN requerido" }, { status: 400 });
+    if (typeof pin !== "string") {
+      return NextResponse.json({ success: false }, { status: 400 });
     }
 
     const business = await prisma.business.findUnique({
       where: { slug },
+      select: { pinHash: true },
     });
 
-    if (!business || !business.pinHash) {
-      return NextResponse.json(
-        { error: "Negocio no encontrado" },
-        { status: 404 },
-      );
+    if (!business) {
+      return NextResponse.json({ success: false }, { status: 404 });
     }
 
-    const valid = await bcrypt.compare(pin, business.pinHash);
+    const isValid = await bcrypt.compare(pin, business.pinHash);
 
-    if (!valid) {
-      return NextResponse.json({ error: "PIN incorrecto" }, { status: 401 });
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: isValid });
   } catch (error) {
-    console.error("❌ VERIFY PIN ERROR:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("VERIFY PIN ERROR:", error);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
