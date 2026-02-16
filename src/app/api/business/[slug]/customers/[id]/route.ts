@@ -9,14 +9,14 @@ export async function GET(
 ) {
   try {
     const { slug, id } = await context.params;
-    const customerId = Number(id);
 
-    if (!slug || isNaN(customerId)) {
+    if (!slug || !id) {
       return NextResponse.json({ error: "INVALID_PARAMS" }, { status: 400 });
     }
 
     const business = await prisma.business.findUnique({
       where: { slug },
+      select: { id: true },
     });
 
     if (!business) {
@@ -28,13 +28,13 @@ export async function GET(
 
     const customer = await prisma.customer.findFirst({
       where: {
-        id: customerId,
+        id, // 👈 STRING, no Number()
         businessId: business.id,
       },
       include: {
         cards: {
           include: {
-            tx: {
+            transactions: {
               orderBy: { createdAt: "desc" },
             },
           },
@@ -57,7 +57,7 @@ export async function GET(
       phone: customer.phone,
       points: card?.points ?? 0,
       history:
-        card?.tx.map((t) => ({
+        card?.transactions.map((t) => ({
           id: t.id,
           type: t.type,
           points: t.points,

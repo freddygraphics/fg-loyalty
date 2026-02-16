@@ -1,46 +1,6 @@
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
+import { TxType } from "@prisma/client";
 import prisma from "@/lib/db";
 
-/* ======================================================
-   GET → MOSTRAR TARJETA (CLIENTE)
-====================================================== */
-export async function GET(
-  _: Request,
-  context: { params: Promise<{ token: string }> },
-) {
-  try {
-    const { token } = await context.params;
-
-    const card = await prisma.loyaltyCard.findUnique({
-      where: { token },
-      include: {
-        business: true,
-        customer: true,
-      },
-    });
-
-    if (!card) {
-      return Response.json({ error: "Card not found" }, { status: 404 });
-    }
-
-    return Response.json({
-      customerName: card.customer.name,
-      businessName: card.business.name,
-      points: card.points,
-      goal: card.business.goal,
-      active: card.active,
-    });
-  } catch (error) {
-    console.error("❌ GET SCAN ERROR:", error);
-    return Response.json({ error: "Server error" }, { status: 500 });
-  }
-}
-
-/* ======================================================
-   POST → ESCANEAR Y SUMAR PUNTOS (NEGOCIO)
-====================================================== */
 export async function POST(
   _: Request,
   context: { params: Promise<{ token: string }> },
@@ -56,20 +16,23 @@ export async function POST(
       },
     });
 
-    if (!card || !card.active) {
+    if (!card) {
       return Response.json({ error: "Tarjeta inválida" }, { status: 400 });
     }
 
     const pointsToAdd = card.business.earnStep;
-    const newPoints = card.points + pointsToAdd;
-    const reachedGoal = newPoints >= card.business.goal;
+    let newPoints = card.points + pointsToAdd;
+
+    // 🔒 CAP LIMIT
+    if (card.business.limitMode === "cap" && newPoints > card.business.goal) {
+      newPoints = card.business.goal;
+    }
 
     const updated = await prisma.$transaction(async (tx) => {
       const updatedCard = await tx.loyaltyCard.update({
         where: { id: card.id },
         data: {
           points: newPoints,
-          active: !reachedGoal,
         },
       });
 
@@ -77,7 +40,7 @@ export async function POST(
         data: {
           businessId: card.businessId,
           cardId: card.id,
-          type: "earn",
+          type: TxType.EARN,
           points: pointsToAdd,
         },
       });
@@ -88,7 +51,7 @@ export async function POST(
     return Response.json({
       success: true,
       points: updated.points,
-      completed: !updated.active,
+      reachedGoal: updated.points >= card.business.goal,
       customer: card.customer,
     });
   } catch (error) {

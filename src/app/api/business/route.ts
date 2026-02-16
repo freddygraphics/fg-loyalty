@@ -1,31 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, slug, goal, ownerId, pin } = body;
+    const { name, slug, goal, ownerId, earnStep, limitMode, redeemMode } = body;
 
-    if (!name || !slug || !ownerId || !pin) {
+    if (!name || !slug || !ownerId) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
-
-    const pinHash = await bcrypt.hash(pin, 10);
 
     const business = await prisma.business.create({
       data: {
         name,
         slug,
         goal: Number(goal) || 10,
+        earnStep: Number(earnStep) || 1,
+        limitMode: limitMode || "cap",
+        redeemMode: redeemMode || "subtract",
 
-        // ✅ RELACIÓN CORRECTA
         owner: {
-          connect: { id: Number(ownerId) },
+          connect: { id: ownerId }, // 👈 STRING
         },
-
-        // ✅ CAMPO OBLIGATORIO
-        pinHash,
       },
     });
 

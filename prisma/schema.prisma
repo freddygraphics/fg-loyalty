@@ -8,104 +8,129 @@ datasource db {
 }
 
 enum TxType {
-  earn
-  redeem
-  adjust
+  EARN
+  REDEEM
+  ADJUST
+}
+
+enum PlanType {
+  STARTER
+  PRO
+  MULTI
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
 }
 
 model User {
-  id           Int    @id @default(autoincrement())
-  name         String
-  email        String @unique
-  passwordHash String
-  role         String @default("OWNER")
+  id       String @id @default(cuid())
+  email    String @unique
+  password String
+
+  businesses Business[] @relation("BusinessOwner")
+
+  transactions PointTransaction[]
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
 
-  business Business?
-  tx       PointTransaction[]
-
-  @@map("user")
+model PlatformAdmin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      String
+  createdAt DateTime @default(now())
 }
 
 model Business {
-  id   Int    @id @default(autoincrement())
-  name String
-  slug String @unique
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
 
-  ownerId Int  @unique
-  owner   User @relation(fields: [ownerId], references: [id])
+  plan      PlanType @default(STARTER)
+  status    SubscriptionStatus @default(TRIALING)
+  trialEndsAt DateTime?
 
-  // 🔐 PIN SOLO PARA SCAN / POS
-  pinHash String
+  goal      Int @default(10)
 
-  goal       Int    @default(50)
-  earnStep   Int    @default(5)
-  limitMode  String @default("cap")
-  redeemMode String @default("reset")
+  earnStep  Int @default(1)              // 👈 cada scan suma esto
+  limitMode String @default("cap")       // cap | unlimited
+  redeemMode String @default("subtract") // subtract | reset
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  active    Boolean  @default(true)
 
-  // ✅ RELACIONES INVERSAS (ESTO FALTABA)
-  customers    Customer[]
-  cards        LoyaltyCard[]
+  ownerId   String
+  owner     User     @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  customers Customer[]
+  cards     LoyaltyCard[]
   transactions PointTransaction[]
 
-  @@map("business")
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
 }
 
+
+
 model Customer {
-  id         Int      @id @default(autoincrement())
-  businessId Int
+  id         String  @id @default(cuid())
+  businessId String
   name       String
   phone      String
   email      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 
   business Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   cards    LoyaltyCard[]
 
-  @@unique([businessId, phone])
-  @@map("customer")
-}
-model LoyaltyCard {
-  id         Int @id @default(autoincrement())
-  businessId Int
-  customerId Int
-
-  token  String  @unique
-  points Int     @default(0)
-  active Boolean @default(true)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lastScanAt DateTime?   // ✅ AÑADIR ESTA LÍNEA
+  @@unique([businessId, phone])
+  @@index([businessId])
+}
 
-  business Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  tx       PointTransaction[]
+model LoyaltyCard {
+  id         String @id @default(cuid())
+  token      String @unique @default(cuid()) // 👈 AGREGAR ESTO
+  businessId String
+  customerId String
+  points     Int    @default(0)
+lastScanAt DateTime?
 
-  @@map("loyalty_card")
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  transactions PointTransaction[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([businessId, customerId])
+  @@index([businessId])
+  @@index([customerId])
 }
 
 
 model PointTransaction {
-  id         Int      @id @default(autoincrement())
-  businessId Int
-  cardId     Int
-  userId     Int? // futuro: staff
-  type       TxType
-  points     Int
-  note       String?
-  createdAt  DateTime @default(now())
+  id         String  @id @default(cuid())
+  businessId String
+  cardId     String
+  userId     String?
+
+  type   TxType
+  points Int
+  note   String?
 
   business Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
   card     LoyaltyCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
   user     User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@map("point_transaction")
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+  @@index([cardId])
+  @@index([userId])
 }

@@ -9,14 +9,12 @@ export async function POST(
   context: { params: Promise<{ slug: string; token: string }> },
 ) {
   try {
-    // 🔑 IMPORTANTE: await params
     const { slug, token } = await context.params;
 
-    // 1️⃣ Buscar tarjeta + negocio
+    // 1️⃣ Buscar tarjeta por token + negocio
     const card = await prisma.loyaltyCard.findFirst({
       where: {
         token,
-        active: true,
         business: { slug },
       },
       include: {
@@ -43,16 +41,8 @@ export async function POST(
       );
     }
 
-    let newPoints = current;
-
-    // 3️⃣ Aplicar regla de redención
-    if (business.redeemMode === "reset") {
-      newPoints = 0;
-    }
-
-    if (business.redeemMode === "subtract") {
-      newPoints = current - goal;
-    }
+    // 3️⃣ Lógica simple: resetear puntos al redimir
+    const newPoints = current - goal;
 
     // 4️⃣ Actualizar tarjeta
     await prisma.loyaltyCard.update({
@@ -60,12 +50,12 @@ export async function POST(
       data: { points: newPoints },
     });
 
-    // 5️⃣ Registrar transacción
+    // 5️⃣ Registrar transacción con ENUM correcto
     await prisma.pointTransaction.create({
       data: {
         businessId: business.id,
         cardId: card.id,
-        type: "redeem",
+        type: "REDEEM", // 👈 ENUM correcto
         points: -goal,
         note: "Redención de recompensa",
       },

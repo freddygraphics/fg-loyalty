@@ -5,8 +5,8 @@ import { Prisma } from "@prisma/client";
 
 const ownerLoginSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
-  passwordHash: true,
-  business: {
+  password: true,
+  businesses: {
     select: {
       id: true,
       slug: true,
@@ -30,14 +30,14 @@ export async function POST(req: Request) {
       select: ownerLoginSelect,
     });
 
-    if (!user || !user.passwordHash) {
+    if (!user || !user.password) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 },
       );
     }
 
-    const isValid = await bcrypt.compare(password, user.passwordHash);
+    const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -45,16 +45,19 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!user.business) {
+    const business = user.businesses?.[0];
+
+    if (!business) {
       return NextResponse.json(
         { error: "Business not found" },
         { status: 404 },
       );
     }
+
     const res = NextResponse.json({
       success: true,
-      businessId: user.business.id,
-      slug: user.business.slug,
+      businessId: business.id,
+      slug: business.slug,
     });
 
     res.cookies.set("owner_session", String(user.id), {

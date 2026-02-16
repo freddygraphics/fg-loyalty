@@ -10,62 +10,72 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
     const form = new FormData(e.currentTarget);
 
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: form.get("email"),
-        password: form.get("password"),
-      }),
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.get("email"),
+          password: form.get("password"),
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error || "Invalid credentials");
+      if (!res.ok) {
+        setError(data?.error || "Credenciales inválidas");
+        setLoading(false);
+        return;
+      }
+
+      router.replace(data.redirectTo); // 👈 mejor que push
+    } catch (err) {
+      setError("Error inesperado. Intenta nuevamente.");
       setLoading(false);
-      return;
     }
-
-    router.push(`/business/${data.slug}/dashboard`);
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50">
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow w-full max-w-sm space-y-4"
+        className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-sm space-y-5"
       >
-        <h1 className="text-xl font-bold text-center">Access Dashboard</h1>
+        <h1 className="text-2xl font-semibold text-center">Iniciar sesión</h1>
 
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          className="input w-full"
-          required
-        />
+        <div className="space-y-3">
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            required
+          />
 
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          className="input w-full"
-          required
-        />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            required
+          />
+        </div>
 
         {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
         <button
           disabled={loading}
-          className="w-full bg-black text-white py-2 rounded"
+          className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-60"
         >
-          {loading ? "Signing in…" : "Access"}
+          {loading ? "Entrando…" : "Acceder"}
         </button>
       </form>
     </main>

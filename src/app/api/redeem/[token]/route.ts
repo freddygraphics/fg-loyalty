@@ -12,10 +12,9 @@ export async function POST(
     // 🔑 await params
     const { token } = await context.params;
 
-    const card = await prisma.loyaltyCard.findFirst({
+    const card = await prisma.loyaltyCard.findUnique({
       where: {
         token,
-        active: true,
       },
       include: {
         business: true,
@@ -58,7 +57,7 @@ export async function POST(
       data: {
         businessId: card.businessId,
         cardId: card.id,
-        type: "redeem",
+        type: "REDEEM",
         points: -goal,
         note: "Redención",
       },

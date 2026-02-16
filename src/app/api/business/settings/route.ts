@@ -7,7 +7,7 @@ import prisma from "@/lib/db";
 export async function POST(req: Request) {
   const form = await req.formData();
 
-  const businessId = Number(form.get("businessId"));
+  const businessId = form.get("businessId") as string;
   const goal = Number(form.get("goal"));
   const earnStep = Number(form.get("earnStep"));
   const limitMode = form.get("limitMode") as "cap" | "overflow";
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   }
 
   await prisma.business.update({
-    where: { id: businessId },
+    where: { id: businessId }, // 👈 STRING ahora
     data: {
       goal,
       earnStep,
@@ -29,4 +29,3 @@ export async function POST(req: Request) {
 
   return NextResponse.redirect(new URL("/dashboard", req.url));
 }
-

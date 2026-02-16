@@ -11,11 +11,10 @@ export async function POST(
   try {
     const { slug, token } = await context.params;
 
-    // 1️⃣ Buscar tarjeta + negocio
+    // 1️⃣ Buscar tarjeta por token + negocio
     const card = await prisma.loyaltyCard.findFirst({
       where: {
         token,
-        active: true,
         business: { slug },
       },
       include: {
@@ -33,13 +32,13 @@ export async function POST(
     const { business } = card;
 
     const current = card.points;
-    const step = business.earnStep;
+    const step = 1; // 👈 Como no tienes earnStep en schema
     const goal = business.goal;
 
     let newPoints = current + step;
 
-    // 2️⃣ Límite
-    if (business.limitMode === "cap" && newPoints > goal) {
+    // 2️⃣ Cap simple al goal
+    if (newPoints > goal) {
       newPoints = goal;
     }
 
@@ -49,12 +48,12 @@ export async function POST(
       data: { points: newPoints },
     });
 
-    // 4️⃣ Transaction
+    // 4️⃣ Crear transaction (usar enum correcto)
     await prisma.pointTransaction.create({
       data: {
         businessId: business.id,
         cardId: card.id,
-        type: "earn",
+        type: "EARN", // 👈 ENUM correcto
         points: step,
         note: "Earn points",
       },
@@ -63,7 +62,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       newPoints,
-      capped: business.limitMode === "cap" && current + step > goal,
+      capped: current + step > goal,
     });
   } catch (error) {
     console.error("❌ EARN ERROR:", error);

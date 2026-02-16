@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Business" ADD COLUMN     "goal" INTEGER NOT NULL DEFAULT 10;

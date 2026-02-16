@@ -3,60 +3,46 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import * as bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const {
-      name,
-      slug,
-      pin,
-      goal,
-      earnStep,
-      limitMode,
-      redeemMode,
-      userId, // 👈 usuario creador
-    } = body;
+    const { name, slug, goal, earnStep, limitMode, redeemMode, userId } = body;
 
-    if (!name || !slug || !pin || !userId) {
+    if (!name || !slug || !userId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    // 🔒 Hash PIN
-    const pinHash = await bcrypt.hash(pin, 10);
-
-    // 🏪 Crear business (OWNER OBLIGATORIO)
     const business = await prisma.business.create({
       data: {
         name,
         slug,
-        pinHash,
-        goal: goal ?? 50,
-        earnStep: earnStep ?? 5,
+        goal: goal ?? 10,
+        earnStep: earnStep ?? 1,
         limitMode: limitMode ?? "cap",
-        redeemMode: redeemMode ?? "reset",
-
-        // ✅ ESTO ES LO QUE FALTABA
+        redeemMode: redeemMode ?? "subtract",
         ownerId: userId,
       },
     });
-
-    // 👤 Relación roles (extra, correcto)
 
     return NextResponse.json({
       success: true,
       businessId: business.id,
       slug: business.slug,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ CREATE BUSINESS ERROR:", error);
 
-    if (error.code === "P2002") {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
       return NextResponse.json(
         { error: "Slug already exists" },
         { status: 409 },
@@ -66,4 +52,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
