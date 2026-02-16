@@ -1,6 +1,38 @@
 import { TxType } from "@prisma/client";
 import prisma from "@/lib/db";
 
+/* =========================
+   GET → Mostrar tarjeta
+========================= */
+export async function GET(
+  _: Request,
+  context: { params: Promise<{ token: string }> },
+) {
+  const { token } = await context.params;
+
+  const card = await prisma.loyaltyCard.findUnique({
+    where: { token },
+    include: {
+      business: true,
+      customer: true,
+    },
+  });
+
+  if (!card) {
+    return Response.json({ error: "Card not found" }, { status: 404 });
+  }
+
+  return Response.json({
+    customerName: card.customer.name,
+    businessName: card.business.name,
+    points: card.points,
+    goal: card.business.goal,
+  });
+}
+
+/* =========================
+   POST → Sumar puntos
+========================= */
 export async function POST(
   _: Request,
   context: { params: Promise<{ token: string }> },
@@ -23,7 +55,6 @@ export async function POST(
     const pointsToAdd = card.business.earnStep;
     let newPoints = card.points + pointsToAdd;
 
-    // 🔒 CAP LIMIT
     if (card.business.limitMode === "cap" && newPoints > card.business.goal) {
       newPoints = card.business.goal;
     }
@@ -31,9 +62,7 @@ export async function POST(
     const updated = await prisma.$transaction(async (tx) => {
       const updatedCard = await tx.loyaltyCard.update({
         where: { id: card.id },
-        data: {
-          points: newPoints,
-        },
+        data: { points: newPoints },
       });
 
       await tx.pointTransaction.create({
