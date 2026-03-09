@@ -52,13 +52,18 @@ model Business {
 
   plan      PlanType @default(STARTER)
   status    SubscriptionStatus @default(TRIALING)
-  trialEndsAt DateTime?
+
+  stripeCustomerId String?   @unique
+  subscriptionId   String?   @unique
+
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?   // ⭐ IMPORTANTE
 
   goal      Int @default(10)
 
-  earnStep  Int @default(1)              // 👈 cada scan suma esto
-  limitMode String @default("cap")       // cap | unlimited
-  redeemMode String @default("subtract") // subtract | reset
+  earnStep  Int @default(1)
+  limitMode String @default("cap")
+  redeemMode String @default("subtract")
 
   active    Boolean  @default(true)
 

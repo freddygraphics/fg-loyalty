@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 function slugify(text: string) {
   return text
@@ -43,19 +46,18 @@ export async function POST(req: Request) {
       },
     });
 
-    // 🏪 Create business
+    // 🏪 Create business (sin trial manual)
     const business = await prisma.business.create({
       data: {
         name: businessName,
         slug,
         ownerId: user.id,
         plan: "STARTER",
-        status: "TRIALING",
-        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        status: "CANCELED", // hasta que Stripe lo active
       },
     });
 
-    // 🔐 Auto-login (cookie segura)
+    // 🔐 Auto-login cookie
     const cookieStore = await cookies();
     cookieStore.set("userId", user.id, {
       httpOnly: true,
@@ -65,9 +67,28 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 30,
     });
 
+    // 💳 Crear Stripe Checkout con trial 7 días
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: user.email,
+      line_items: [
+        {
+          price: process.env.STRIPE_STARTER_PRICE_ID!,
+          quantity: 1,
+        },
+      ],
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: {
+          businessId: business.id,
+        },
+      },
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/business/${business.slug}/dashboard`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+    });
+
     return NextResponse.json({
-      success: true,
-      redirectTo: `/business/${business.slug}/dashboard`,
+      stripeUrl: session.url,
     });
   } catch (err) {
     console.error("Register error:", err);

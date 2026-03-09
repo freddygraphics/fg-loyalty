@@ -43,7 +43,7 @@ export default function JoinPage({ params }: PageProps) {
   // ✅ CUANDO YA SE REGISTRÓ → MOSTRAR TARJETA
   if (success && cardToken) {
     const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ?? "https://fg-loyalty.vercel.app";
+      process.env.NEXT_PUBLIC_APP_URL ?? "https://getfideliza.com";
 
     const cardUrl = `${appUrl}/scan/${cardToken}`;
 

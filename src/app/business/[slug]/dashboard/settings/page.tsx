@@ -15,6 +15,7 @@ export default function SettingsPage() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -100,7 +101,7 @@ export default function SettingsPage() {
           </label>
 
           <button
-            onClick={saveSettings}
+            onClick={() => setShowConfirm(true)}
             className="bg-black text-white px-4 py-2 rounded"
           >
             Save changes
@@ -108,22 +109,38 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* 🔐 SECURITY */}
+      {/* ⚠️ MODAL */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg space-y-4">
+            <h2 className="text-lg font-semibold">⚠ Confirm goal change</h2>
 
-      {/* ⚠️ DANGER */}
-      <section>
-        <h2 className="text-lg font-bold mb-4 text-red-600">⚠️ Danger zone</h2>
+            <p className="text-sm text-gray-600">
+              Changing the goal will affect all active customers. Their current
+              progress will continue under the new goal.
+            </p>
 
-        <div className="bg-white border border-red-200 rounded-lg p-5 space-y-3">
-          <button className="w-full border border-red-500 text-red-600 px-4 py-2 rounded">
-            Pause program
-          </button>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 border rounded"
+              >
+                Cancel
+              </button>
 
-          <button className="w-full bg-red-600 text-white px-4 py-2 rounded">
-            Reset all points
-          </button>
+              <button
+                onClick={() => {
+                  setShowConfirm(false);
+                  saveSettings();
+                }}
+                className="px-4 py-2 bg-black text-white rounded"
+              >
+                Confirm change
+              </button>
+            </div>
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

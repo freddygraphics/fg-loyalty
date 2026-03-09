@@ -1,14 +1,17 @@
 // app/(marketing)/page.tsx
-// Landing Page — App de Puntos (Next.js + Tailwind)
-// ✅ Pega este archivo tal cual (o cámbiale la ruta). No requiere libs extra.
+// Landing Page — Loyalty App (Next.js + Tailwind)
+// ✅ Paste as-is. No extra libs required.
 
+"use client";
+
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LeadForm from "@/components/LeadForm";
 
 const features = [
   {
-    title: "QR rápido en segundos",
-    desc: "Escanea el QR del cliente y suma puntos al instante. Sin papel, sin apps complicadas.",
+    title: "Fast QR scanning in seconds",
+    desc: "Scan the customer’s QR and add points instantly. No paper, no complicated apps.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -24,8 +27,8 @@ const features = [
     ),
   },
   {
-    title: "Metas y recompensas",
-    desc: "Define la meta (ej. 10 puntos) y el paso de ganancia (ej. 1 por visita o por compra).",
+    title: "Goals & rewards",
+    desc: "Set the goal (e.g., 10 points) and the earning step (e.g., 1 per visit or per purchase).",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -40,8 +43,8 @@ const features = [
     ),
   },
   {
-    title: "Dashboard y métricas",
-    desc: "Ve escaneos del día, puntos entregados, clientes y progreso hacia la meta.",
+    title: "Dashboard & metrics",
+    desc: "Track daily scans, points issued, customers, and progress toward the goal.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -56,8 +59,8 @@ const features = [
     ),
   },
   {
-    title: "Seguridad con PIN",
-    desc: "Protege el scanner y evita usos no autorizados en caja con un PIN del negocio.",
+    title: "PIN security",
+    desc: "Protect the scanner and prevent unauthorized use at the counter with a business PIN.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -77,57 +80,58 @@ const features = [
 ];
 
 const useCases = [
-  "Restaurantes y cafeterías",
-  "Barberías y salones de belleza",
+  "Restaurants & coffee shops",
+  "Barbershops & beauty salons",
   "Car wash / detailing",
-  "Gimnasios",
-  "Landscaping y servicios locales",
-  "Tiendas y comercios",
+  "Gyms",
+  "Landscaping & local services",
+  "Stores & retail",
 ];
 
 const howItWorks = [
   {
     step: "1",
-    title: "Cliente se registra",
-    desc: "Recibe su QR personal (único) para acumular puntos.",
+    title: "Customer signs up",
+    desc: "They receive their personal (unique) QR to collect points.",
   },
   {
     step: "2",
-    title: "Compra / visita",
-    desc: "El empleado abre el scanner y escanea el QR.",
+    title: "Purchase / visit",
+    desc: "A staff member opens the scanner and scans the QR.",
   },
   {
     step: "3",
-    title: "Puntos al instante",
-    desc: "El sistema suma puntos y muestra el total actualizado.",
+    title: "Instant points",
+    desc: "The system adds points and shows the updated total.",
   },
   {
     step: "4",
-    title: "Canje de recompensa",
-    desc: "Al llegar a la meta, se canjea el premio y el cliente regresa.",
+    title: "Redeem reward",
+    desc: "Once they hit the goal, they redeem the reward and come back again.",
   },
 ];
 
 const faqs = [
   {
-    q: "¿Necesito imprimir tarjetas físicas?",
-    a: "No. Todo es digital. El cliente usa su QR desde el teléfono (o puedes imprimir el QR si lo deseas).",
+    q: "Do I need to print physical cards?",
+    a: "No. Everything is digital. Customers use their QR on their phone (or you can print the QR if you want).",
   },
   {
-    q: "¿Funciona para cualquier tipo de negocio?",
-    a: "Sí. Cualquier negocio con clientes recurrentes puede usarlo: comida, belleza, auto, servicios, retail, etc.",
+    q: "Does it work for any type of business?",
+    a: "Yes. Any business with repeat customers can use it: food, beauty, auto, services, retail, and more.",
   },
   {
-    q: "¿Se puede personalizar con mi marca?",
-    a: "Sí. Puedes usar tu logo, colores y dominio (ej: app.tumarca.com).",
+    q: "Can I customize it with my brand?",
+    a: "Yes. You can use your logo, colors, and even your domain (e.g., app.yourbrand.com).",
   },
   {
-    q: "¿Cómo evito que cualquiera escanee?",
-    a: "El scanner se protege con un PIN del negocio, ideal para empleados en caja.",
+    q: "How do I prevent anyone from scanning?",
+    a: "The scanner is protected with a business PIN, perfect for employees at the counter.",
   },
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
   return (
     <main className="min-h-screen bg-white text-slate-900">
       {/* Subtle background */}
@@ -145,20 +149,20 @@ export default function LandingPage() {
               <span className="text-sm font-bold">FG</span>
             </div>
             <div className="leading-tight">
-              <div className="text-sm font-semibold">App de Puntos</div>
-              <div className="text-xs text-slate-500">Fidelización con QR</div>
+              <div className="text-sm font-semibold">Loyalty App</div>
+              <div className="text-xs text-slate-500">QR-based loyalty</div>
             </div>
           </div>
 
           <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
-            <a href="#beneficios" className="hover:text-slate-900">
-              Beneficios
+            <a href="#benefits" className="hover:text-slate-900">
+              Benefits
             </a>
-            <a href="#funciona" className="hover:text-slate-900">
-              Cómo funciona
+            <a href="#how-it-works" className="hover:text-slate-900">
+              How it works
             </a>
             <a href="#features" className="hover:text-slate-900">
-              Funciones
+              Features
             </a>
             <a href="#faq" className="hover:text-slate-900">
               FAQ
@@ -170,14 +174,14 @@ export default function LandingPage() {
               href="/login"
               className="text-sm font-medium text-gray-700 hover:text-black"
             >
-              Iniciar sesión
+              Sign in
             </Link>
 
             <Link
               href="/register"
               className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:opacity-90 transition"
             >
-              Empezar gratis
+              Start free
             </Link>
           </div>
         </div>
@@ -189,18 +193,18 @@ export default function LandingPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
               <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-              Tarjeta digital • QR • Dashboard
+              Digital card • QR • Dashboard
             </div>
 
             <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Fideliza clientes con una{" "}
-              <span className="text-slate-900">App de Puntos</span> moderna.
+              Turn customers into repeat buyers with a{" "}
+              <span className="text-slate-900">modern loyalty app</span>.
             </h1>
 
             <p className="mt-4 text-base text-slate-600 sm:text-lg">
-              Reemplaza tarjetas de papel con un sistema digital con QR. Suma
-              puntos en segundos, aumenta visitas recurrentes y controla todo
-              desde un dashboard.
+              Replace paper punch cards with a digital QR system. Add points in
+              seconds, increase repeat visits, and manage everything from a
+              dashboard.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -208,20 +212,20 @@ export default function LandingPage() {
                 href="/register"
                 className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition"
               >
-                Crear mi programa gratis
+                Create my program for free
               </Link>
 
               <Link
-                href="#como-funciona"
+                href="#how-it-works"
                 className="border border-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition"
               >
-                Ver cómo funciona
+                See how it works
               </Link>
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-3">
-              <Stat label="Setup" value="Rápido" />
-              <Stat label="Escaneo" value="QR" />
+              <Stat label="Setup" value="Fast" />
+              <Stat label="Scan" value="QR" />
               <Stat label="Control" value="Dashboard" />
             </div>
           </div>
@@ -233,26 +237,24 @@ export default function LandingPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold">Demo Coffee Shop</div>
-                  <div className="text-xs text-slate-500">
-                    Programa de puntos
-                  </div>
+                  <div className="text-xs text-slate-500">Loyalty program</div>
                 </div>
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Activo
+                  Active
                 </span>
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <MiniMetric title="Escaneos hoy" value="24" />
-                <MiniMetric title="Puntos hoy" value="48" />
-                <MiniMetric title="Clientes" value="312" />
-                <MiniMetric title="Meta" value="10 pts" />
+                <MiniMetric title="Scans today" value="24" />
+                <MiniMetric title="Points today" value="48" />
+                <MiniMetric title="Customers" value="312" />
+                <MiniMetric title="Goal" value="10 pts" />
               </div>
 
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">Escaneo reciente</div>
-                  <div className="text-xs text-slate-500">hace 2 min</div>
+                  <div className="text-sm font-semibold">Recent scan</div>
+                  <div className="text-xs text-slate-500">2 min ago</div>
                 </div>
 
                 <div className="mt-3 flex items-center gap-3">
@@ -273,13 +275,13 @@ export default function LandingPage() {
                       Juan Pérez
                     </div>
                     <div className="text-xs text-slate-600">
-                      +1 punto • Total:{" "}
+                      +1 point • Total:{" "}
                       <span className="font-semibold text-slate-900">8</span>
                     </div>
                   </div>
                   <div className="ml-auto">
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                      Progreso 80%
+                      80% progress
                     </span>
                   </div>
                 </div>
@@ -290,23 +292,23 @@ export default function LandingPage() {
                   </div>
                   <div className="mt-2 flex justify-between text-xs text-slate-500">
                     <span>0</span>
-                    <span>Meta 10</span>
+                    <span>Goal 10</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
                 <button className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
-                  Abrir Scanner
+                  Open Scanner
                 </button>
                 <button className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">
-                  Ver Historial
+                  View History
                 </button>
               </div>
 
               <div className="mt-4 text-xs text-slate-500">
-                * Mock visual. Tu sistema real se conecta a tu negocio y
-                clientes.
+                * Mock preview. Your real system connects to your business and
+                customers.
               </div>
             </div>
           </div>
@@ -317,7 +319,7 @@ export default function LandingPage() {
       <section className="mx-auto max-w-6xl px-4 pb-10">
         <div className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-sm">
           <div className="text-center text-sm font-semibold text-slate-700">
-            Perfecto para negocios locales que quieren clientes recurrentes
+            Perfect for local businesses that want repeat customers
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 text-center text-sm text-slate-500 sm:grid-cols-3 lg:grid-cols-6">
             {[
@@ -340,34 +342,33 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits */}
-      <section id="beneficios" className="mx-auto max-w-6xl px-4 py-12">
+      <section id="benefits" className="mx-auto max-w-6xl px-4 py-12">
         <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight">
-              Más visitas. Más ventas. Menos fricción.
+              More visits. More sales. Less friction.
             </h2>
             <p className="mt-3 text-slate-600">
-              En vez de depender solo de anuncios, convierte cada compra en una
-              razón para regresar. Retener es más barato que conseguir clientes
-              nuevos.
+              Instead of relying only on ads, turn every purchase into a reason
+              to come back. Retention is cheaper than acquiring new customers.
             </p>
 
             <div className="mt-6 grid gap-3">
               <Benefit
-                title="Aumenta la recurrencia"
-                desc="Recompensas claras motivan al cliente a completar su meta."
+                title="Increase repeat visits"
+                desc="Clear rewards motivate customers to complete their goal."
               />
               <Benefit
-                title="Control y reportes"
-                desc="Mira escaneos, puntos y clientes para medir resultados."
+                title="Control & reporting"
+                desc="Track scans, points, and customers to measure results."
               />
               <Benefit
-                title="Imagen profesional"
-                desc="Sistema moderno con QR y experiencia rápida para tu equipo."
+                title="Professional experience"
+                desc="Modern QR system with a fast workflow for your team."
               />
               <Benefit
-                title="Sin tarjetas perdidas"
-                desc="Digital: el cliente siempre tiene su QR disponible."
+                title="No lost cards"
+                desc="Digital: customers always have their QR available."
               />
             </div>
           </div>
@@ -376,10 +377,10 @@ export default function LandingPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-slate-900">
-                  Ejemplo de programa
+                  Program example
                 </div>
                 <div className="text-xs text-slate-500">
-                  “Compra 9, el 10 es gratis”
+                  “Buy 9, get the 10th free”
                 </div>
               </div>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -389,16 +390,16 @@ export default function LandingPage() {
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs text-slate-500">Meta</div>
-                <div className="text-lg font-bold">10 puntos</div>
+                <div className="text-xs text-slate-500">Goal</div>
+                <div className="text-lg font-bold">10 points</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs text-slate-500">Ganancia</div>
-                <div className="text-lg font-bold">+1 por visita</div>
+                <div className="text-xs text-slate-500">Earn</div>
+                <div className="text-lg font-bold">+1 per visit</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs text-slate-500">Recompensa</div>
-                <div className="text-lg font-bold">Gratis</div>
+                <div className="text-xs text-slate-500">Reward</div>
+                <div className="text-lg font-bold">Free</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-xs text-slate-500">Control</div>
@@ -407,7 +408,7 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold">¿Quién puede usarla?</div>
+              <div className="text-sm font-semibold">Who is it for?</div>
               <ul className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
                 {useCases.map((c) => (
                   <li key={c} className="flex items-center gap-2">
@@ -422,13 +423,13 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="funciona" className="mx-auto max-w-6xl px-4 py-12">
+      <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-12">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight">
-            Cómo funciona
+            How it works
           </h2>
           <p className="mt-3 text-slate-600">
-            Flujo simple en 4 pasos para tu equipo y tus clientes.
+            A simple 4-step flow for your team and your customers.
           </p>
         </div>
 
@@ -452,19 +453,19 @@ export default function LandingPage() {
         <div className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="grid gap-6 lg:grid-cols-3 lg:items-center">
             <div className="lg:col-span-2">
-              <div className="text-sm font-semibold">Tip rápido</div>
+              <div className="text-sm font-semibold">Quick tip</div>
               <p className="mt-2 text-sm text-slate-600">
-                Puedes usarlo como programa por visitas o por compra (según tu
-                configuración). Ejemplo: por cada $10 = 1 punto, o por cada
-                visita = 1 punto.
+                You can use it as a program per visit or per purchase (depending
+                on your settings). Example: every $10 = 1 point, or every visit
+                = 1 point.
               </p>
             </div>
             <div className="flex justify-center lg:justify-end">
               <Link
-                href="#contacto"
+                href="#contact"
                 className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                Quiero una demo
+                I want a demo
               </Link>
             </div>
           </div>
@@ -476,17 +477,17 @@ export default function LandingPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight">
-              Funciones principales
+              Key features
             </h2>
             <p className="mt-2 text-slate-600">
-              Lo esencial para fidelizar sin complicarte.
+              Everything you need to build loyalty—without the hassle.
             </p>
           </div>
           <Link
-            href="#contacto"
+            href="#contact"
             className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50"
           >
-            Hablar ahora
+            Talk now
           </Link>
         </div>
 
@@ -509,14 +510,15 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
       {/* Pricing */}
-      <section id="precios" className="mx-auto max-w-6xl px-4 py-16">
+      <section id="pricing" className="mx-auto max-w-6xl px-4 py-16">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight">
-            Planes y precios
+            Plans & pricing
           </h2>
           <p className="mt-3 text-slate-600">
-            Elige el plan ideal para tu negocio. Sin contratos largos.
+            Choose the plan that fits your business. No long-term contracts.
           </p>
         </div>
 
@@ -525,60 +527,63 @@ export default function LandingPage() {
           <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
             <h3 className="text-lg font-semibold">Starter</h3>
             <p className="mt-2 text-sm text-slate-500">
-              Ideal para negocios pequeños
+              Ideal for small businesses
             </p>
 
             <div className="mt-6">
               <span className="text-4xl font-extrabold">$29</span>
-              <span className="text-slate-500 text-sm"> / mes</span>
+              <span className="text-slate-500 text-sm"> / month</span>
             </div>
 
             <ul className="mt-6 space-y-3 text-sm text-slate-600">
-              <li>✔ Hasta 300 clientes</li>
-              <li>✔ Programa de puntos básico</li>
-              <li>✔ Escaneo QR</li>
-              <li>✔ Dashboard simple</li>
-              <li>✔ Soporte por email</li>
+              <li>✔ Up to 300 customers</li>
+              <li>✔ Basic loyalty program</li>
+              <li>✔ QR scanning</li>
+              <li>✔ Simple dashboard</li>
+              <li>✔ Email support</li>
             </ul>
 
-            <button className="mt-8 w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold hover:bg-slate-50">
-              Empezar Starter
+            <button
+              onClick={() => router.push("/register")}
+              className="bg-black text-white px-6 py-3 rounded"
+            >
+              Start your free trial
             </button>
           </div>
 
-          {/* PRO (Destacado) */}
+          {/* PRO (Featured) */}
           <div className="relative rounded-[2rem] border-2 border-slate-900 bg-white p-8 shadow-xl">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-1 text-xs font-semibold text-white">
-              Más Popular
+              Most Popular
             </div>
 
             <h3 className="text-lg font-semibold">Pro</h3>
             <p className="mt-2 text-sm text-slate-500">
-              Para negocios en crecimiento
+              For growing businesses
             </p>
 
             <div className="mt-6">
               <span className="text-4xl font-extrabold">$59</span>
-              <span className="text-slate-500 text-sm"> / mes</span>
+              <span className="text-slate-500 text-sm"> / month</span>
             </div>
 
             <ul className="mt-6 space-y-3 text-sm text-slate-600">
-              <li>✔ Clientes ilimitados</li>
-              <li>✔ Reglas avanzadas de puntos</li>
-              <li>✔ Historial completo</li>
-              <li>✔ Protección con PIN</li>
-              <li>✔ Dominio personalizado</li>
-              <li>✔ Soporte prioritario</li>
+              <li>✔ Unlimited customers</li>
+              <li>✔ Advanced points rules</li>
+              <li>✔ Full history</li>
+              <li>✔ PIN protection</li>
+              <li>✔ Custom domain</li>
+              <li>✔ Priority support</li>
             </ul>
 
             <button className="mt-8 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-800">
-              Empezar Pro
+              Start Pro
             </button>
           </div>
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-500">
-          * Puedes cancelar en cualquier momento. Sin contratos obligatorios.
+          * Cancel anytime. No required contracts.
         </p>
       </section>
 
@@ -588,25 +593,25 @@ export default function LandingPage() {
           <div className="grid gap-8 lg:grid-cols-3 lg:items-center">
             <div className="lg:col-span-2">
               <h3 className="text-2xl font-extrabold">
-                Activa tu programa de fidelización en minutos.
+                Launch your loyalty program in minutes.
               </h3>
               <p className="mt-2 text-white/80">
-                Ideal para negocios locales. Escaneo QR, puntos y métricas en un
-                solo lugar.
+                Perfect for local businesses. QR scanning, points, and metrics
+                in one place.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link
-                href="#contacto"
+                href="#contact"
                 className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
               >
-                Crear mi programa de puntos
+                Create my loyalty program
               </Link>
               <Link
                 href="#faq"
                 className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/15"
               >
-                Ver preguntas
+                View FAQ
               </Link>
             </div>
           </div>
@@ -616,10 +621,10 @@ export default function LandingPage() {
       {/* FAQ */}
       <section id="faq" className="mx-auto max-w-6xl px-4 py-12">
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight">
-            Preguntas frecuentes
-          </h2>
-          <p className="mt-3 text-slate-600">Lo más común antes de empezar.</p>
+          <h2 className="text-3xl font-extrabold tracking-tight">FAQ</h2>
+          <p className="mt-3 text-slate-600">
+            The most common questions before getting started.
+          </p>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -636,30 +641,30 @@ export default function LandingPage() {
       </section>
 
       {/* Contact */}
-      <section id="contacto" className="mx-auto max-w-6xl px-4 py-14">
+      <section id="contact" className="mx-auto max-w-6xl px-4 py-14">
         <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 className="text-3xl font-extrabold tracking-tight">
-                Solicita una demo
+                Request a demo
               </h2>
               <p className="mt-3 text-slate-600">
-                Déjanos tu info y te mostramos cómo funciona con tu tipo de
-                negocio.
+                Leave your info and we’ll show you how it works for your type of
+                business.
               </p>
 
               <div className="mt-6 grid gap-3 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Setup rápido y asistencia
+                  Fast setup and assistance
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Personalización con marca y dominio
+                  Brand + domain customization
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Ideal para locales y cadenas pequeñas
+                  Great for local businesses and small chains
                 </div>
               </div>
             </div>
@@ -674,15 +679,15 @@ export default function LandingPage() {
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-slate-600">
-            © {new Date().getFullYear()} App de Puntos • Freddy Graphics /
+            © {new Date().getFullYear()} Loyalty App • Freddy Graphics /
             Fideliza
           </div>
           <div className="flex gap-4 text-sm text-slate-600">
-            <a className="hover:text-slate-900" href="#beneficios">
-              Beneficios
+            <a className="hover:text-slate-900" href="#benefits">
+              Benefits
             </a>
-            <a className="hover:text-slate-900" href="#funciona">
-              Cómo funciona
+            <a className="hover:text-slate-900" href="#how-it-works">
+              How it works
             </a>
             <a className="hover:text-slate-900" href="#faq">
               FAQ

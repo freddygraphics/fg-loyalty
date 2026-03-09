@@ -31,7 +31,7 @@ export async function GET(
 }
 
 /* =========================
-   POST → Sumar puntos
+   POST → Reset Automático
 ========================= */
 export async function POST(
   _: Request,
@@ -53,18 +53,18 @@ export async function POST(
     }
 
     const pointsToAdd = card.business.earnStep;
-    let newPoints = card.points + pointsToAdd;
+    const newPoints = card.points + pointsToAdd;
+    const reachedGoal = newPoints >= card.business.goal;
 
-    if (card.business.limitMode === "cap" && newPoints > card.business.goal) {
-      newPoints = card.business.goal;
-    }
+    const result = await prisma.$transaction(async (tx) => {
+      const finalPoints = reachedGoal ? 0 : newPoints;
 
-    const updated = await prisma.$transaction(async (tx) => {
       const updatedCard = await tx.loyaltyCard.update({
         where: { id: card.id },
-        data: { points: newPoints },
+        data: { points: finalPoints },
       });
 
+      // Registrar EARN
       await tx.pointTransaction.create({
         data: {
           businessId: card.businessId,
@@ -74,13 +74,25 @@ export async function POST(
         },
       });
 
+      // Registrar REDEEM si llegó al goal
+      if (reachedGoal) {
+        await tx.pointTransaction.create({
+          data: {
+            businessId: card.businessId,
+            cardId: card.id,
+            type: TxType.REDEEM,
+            points: card.business.goal,
+          },
+        });
+      }
+
       return updatedCard;
     });
 
     return Response.json({
       success: true,
-      points: updated.points,
-      reachedGoal: updated.points >= card.business.goal,
+      points: result.points,
+      reachedGoal,
       customer: card.customer,
     });
   } catch (error) {

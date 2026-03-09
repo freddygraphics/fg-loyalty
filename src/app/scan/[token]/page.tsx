@@ -55,6 +55,7 @@ export default function ScanPage({ params }: PageProps) {
       </main>
     );
   }
+  const stars = Array.from({ length: data.goal });
 
   const missing = Math.max(data.goal - data.points, 0);
   const cardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/scan/${token}`;
@@ -62,18 +63,54 @@ export default function ScanPage({ params }: PageProps) {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-6 rounded-xl shadow text-center space-y-4 w-full max-w-sm">
-        <h1 className="text-xl font-bold">{data.businessName}</h1>
+        <h1 className="text-xl font-bold">{data.customerName}</h1>
 
-        <p className="text-sm text-gray-600">{data.customerName}</p>
+        <p className="text-sm text-gray-600">{data.businessName}</p>
 
-        <QRCode value={cardUrl} size={200} />
-
-        <div className="text-sm">
-          <p>
-            ⭐ Points: <strong>{data.points}</strong>
-          </p>
-          <p className="text-gray-500">🎁 {missing} points to reward</p>
+        <div className="flex justify-center">
+          <QRCode value={cardUrl} size={200} />
         </div>
+
+        <div className="flex justify-center gap-3 flex-wrap">
+          {stars.map((_, index) => {
+            const active = index < data.points;
+
+            return (
+              <div
+                key={index}
+                className={`w-10 h-10 flex items-center justify-center transition-all duration-300 ${
+                  active ? "scale-110" : "opacity-70"
+                }`}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill={active ? "url(#goldGradient)" : "none"}
+                  stroke={active ? "none" : "#D1D5DB"}
+                  strokeWidth="2"
+                  className="w-8 h-8 drop-shadow-sm"
+                >
+                  <defs>
+                    <linearGradient
+                      id="goldGradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stopColor="#FFD700" />
+                      <stop offset="100%" stopColor="#F59E0B" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 2l2.9 6.1 6.7.6-5 4.3 1.5 6.5L12 16.8 5.9 19.5 7.4 13 2.4 8.7l6.7-.6L12 2z" />
+                </svg>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-sm text-gray-500 mt-2">
+          🎁 {missing} point{missing !== 1 ? "s" : ""} to reward
+        </p>
       </div>
     </main>
   );

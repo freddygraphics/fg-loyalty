@@ -1,73 +1,86 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
+import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
+
+const ownerLoginSelect = Prisma.validator<Prisma.UserSelect>()({
+  id: true,
+  email: true,
+  password: true,
+  businesses: {
+    select: {
+      id: true,
+      slug: true,
+    },
+  },
+});
 
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
+    // Validar campos
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email y password son requeridos" },
+        { error: "Email and password are required" },
         { status: 400 },
       );
     }
 
+    const normalizedEmail = String(email).toLowerCase().trim();
+
+    // Buscar usuario
     const user = await prisma.user.findUnique({
-      where: { email: String(email).toLowerCase().trim() },
-      include: { businesses: true },
+      where: { email: normalizedEmail },
+      select: ownerLoginSelect,
     });
 
-    if (!user) {
+    if (!user || !user.password) {
       return NextResponse.json(
-        { error: "Credenciales inválidas" },
+        { error: "Invalid email or password" },
         { status: 401 },
       );
     }
 
-    const ok = await bcrypt.compare(String(password), user.password);
-    if (!ok) {
+    // Comparar contraseña
+    const isValid = await bcrypt.compare(password, user.password);
+
+    if (!isValid) {
       return NextResponse.json(
-        { error: "Credenciales inválidas" },
+        { error: "Invalid email or password" },
         { status: 401 },
       );
     }
 
-    // ✅ Debe existir al menos 1 negocio del owner
-    // 🔥 Obtener negocio real del usuario
-    const business = await prisma.business.findFirst({
-      where: {
-        ownerId: user.id,
-      },
-      select: {
-        id: true,
-        slug: true,
-      },
-    });
+    // Obtener negocio del usuario
+    const business = user.businesses?.[0];
 
     if (!business) {
       return NextResponse.json(
-        { error: "Tu cuenta no tiene negocio asignado" },
-        { status: 403 },
+        { error: "Business not found for this account" },
+        { status: 404 },
       );
     }
 
-    // ✅ Cookie segura (HttpOnly) — el cliente NO puede leerla ni modificarla con JS
-    const cookieStore = await cookies();
-    cookieStore.set("userId", user.id, {
+    // Crear respuesta con redirect
+    const res = NextResponse.json({
+      success: true,
+      redirectTo: `/business/${business.slug}/dashboard`,
+    });
+
+    // Crear cookie segura
+    res.cookies.set("owner_session", String(user.id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 días
     });
-    console.log("Business encontrado:", business);
-    return NextResponse.json({
-      success: true,
-      redirectTo: `/business/${business.slug}/dashboard`,
-    });
-  } catch (err) {
-    return NextResponse.json({ error: "Error en login" }, { status: 500 });
+
+    return res;
+  } catch (error) {
+    console.error("Login error:", error);
+
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

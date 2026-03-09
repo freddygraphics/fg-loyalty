@@ -23,12 +23,12 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: form.get("email"),
+          email: String(form.get("email")).toLowerCase(),
           password: form.get("password"),
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         setError(data?.error || "Credenciales inválidas");
@@ -36,7 +36,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace(data.redirectTo); // 👈 mejor que push
+      router.replace(data.redirectTo);
     } catch (err) {
       setError("Error inesperado. Intenta nuevamente.");
       setLoading(false);

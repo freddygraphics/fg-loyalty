@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import MetricCard from "@/components/dashboard/MetricCard";
 import { Gift, Users, ScanLine, Target } from "lucide-react";
 import BusinessQR from "@/components/dashboard/BusinessQR";
-
+import BillingButton from "@/components/dashboard/BillingButton";
 export default async function DashboardPage({
   params,
 }: {
@@ -50,7 +50,7 @@ export default async function DashboardPage({
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Resumen</h2>
-
+      <BillingButton businessId={business.id} />
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Scans hoy"

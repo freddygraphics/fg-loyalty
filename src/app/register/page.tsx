@@ -38,65 +38,180 @@ export default function RegisterPage() {
         return;
       }
 
-      router.replace(data.redirectTo); // ✅ coherente con API
+      window.location.href = data.stripeUrl;
+      // ✅ coherente con API
     } catch (err) {
       setError("Unexpected error. Try again.");
       setLoading(false);
     }
   }
-
+  const useCases = [
+    "Restaurantes y cafeterías",
+    "Barberías y salones de belleza",
+    "Car wash / detailing",
+    "Gimnasios",
+    "Landscaping y servicios locales",
+    "Tiendas y comercios",
+  ];
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md space-y-6"
-      >
-        <h1 className="text-2xl font-semibold text-center">
-          Crea tu programa de puntos
-        </h1>
+    <main className="min-h-screen bg-white px-6 py-16">
+      <div className="max-w-6xl mx-auto">
+        {/* SECCIÓN SUPERIOR */}
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          {/* LEFT */}
+          {/* LEFT */}
+          <div>
+            <h1 className="text-4xl font-bold mb-6">
+              Turn first-time buyers into loyal customers
+            </h1>
 
-        <div className="space-y-4">
-          <input
-            name="businessName"
-            placeholder="Nombre del negocio"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-            required
-          />
+            <p className="text-gray-600 mb-6 text-lg">
+              Launch your digital loyalty program with QR cards in minutes.
+              Increase repeat visits, boost revenue, and track everything in
+              real time.
+            </p>
 
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-            required
-          />
+            <ul className="space-y-2 text-gray-700">
+              <li>✓ Digital QR loyalty cards</li>
+              <li>✓ Instant scanning from any phone</li>
+              <li>✓ Full control over points & rewards</li>
+              <li>✓ Real-time customer tracking</li>
+            </ul>
+          </div>
 
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-            required
-          />
+          {/* RIGHT */}
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Program example
+                </div>
+                <div className="text-xs text-slate-500">
+                  “Buy 9, get the 10th free”
+                </div>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                Popular
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs text-slate-500">Goal</div>
+                <div className="text-lg font-bold">10 points</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs text-slate-500">Earn</div>
+                <div className="text-lg font-bold">+1 per visit</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs text-slate-500">Reward</div>
+                <div className="text-lg font-bold">Free</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs text-slate-500">Control</div>
+                <div className="text-lg font-bold">Dashboard</div>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="text-sm font-semibold">Who can use it?</div>
+              <ul className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                {useCases.map((c) => (
+                  <li key={c} className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
 
-        {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+        {/* FORMULARIO ABAJO */}
+        <div className="max-w-xl mx-auto mt-10">
+          <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl">
+            <h2 className="text-3xl font-semibold text-center">
+              Start your 7-day free trial
+            </h2>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-black text-white w-full py-2.5 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-60"
-        >
-          {loading ? "Creando…" : "Crear mi programa gratis"}
-        </button>
+            <div className="space-y-6 mt-10">
+              {/* Business Name */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="businessName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Business name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="businessName"
+                  name="businessName"
+                  placeholder="e.g. Demo Coffee Shop"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black transition"
+                  required
+                />
+              </div>
 
-        <p className="text-sm text-center text-gray-500">
-          ¿Ya tienes cuenta?{" "}
-          <a href="/login" className="underline hover:text-black">
-            Iniciar sesión
-          </a>
-        </p>
-      </form>
+              {/* Email */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black transition"
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="text" // 👈 ahora se ve mientras escribes
+                  placeholder="Enter your password"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black transition"
+                  required
+                  minLength={6}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-6 bg-black text-white w-full py-3 rounded-xl font-medium hover:bg-gray-900 transition disabled:opacity-60"
+            >
+              {loading ? "Creating account…" : "Start my 7-Day Trial"}
+            </button>
+
+            <p className="mt-4 text-sm text-center text-gray-500">
+              Already have an account?{" "}
+              <a href="/login" className="underline hover:text-black">
+                Sign in
+              </a>
+            </p>
+          </form>
+        </div>
+      </div>
     </main>
   );
 }
