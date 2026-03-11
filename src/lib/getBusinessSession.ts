@@ -5,20 +5,14 @@ export async function getBusinessSession() {
   const cookieStore = await cookies();
   const userId = cookieStore.get("userId")?.value;
 
-  if (!userId) {
-    return null;
-  }
+  if (!userId) return null;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      businesses: true,
-    },
+    include: { businesses: true },
   });
 
-  if (!user || user.businesses.length === 0) {
-    return null;
-  }
+  if (!user || user.businesses.length === 0) return null;
 
   const business = user.businesses[0];
 

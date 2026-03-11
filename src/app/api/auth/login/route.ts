@@ -19,7 +19,6 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
-    // Validar campos
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
@@ -29,7 +28,6 @@ export async function POST(req: Request) {
 
     const normalizedEmail = String(email).toLowerCase().trim();
 
-    // Buscar usuario
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: ownerLoginSelect,
@@ -42,7 +40,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Comparar contraseña
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
@@ -52,7 +49,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Obtener negocio del usuario
     const business = user.businesses?.[0];
 
     if (!business) {
@@ -62,19 +58,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Crear respuesta con redirect
     const res = NextResponse.json({
       success: true,
       redirectTo: `/business/${business.slug}/dashboard`,
     });
 
-    // Crear cookie segura
-    res.cookies.set("owner_session", String(user.id), {
+    // COOKIE PRO para subdominios
+    res.cookies.set("userId", String(user.id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 días
+      domain: ".getfideliza.com", // 🔥 importante
+      maxAge: 60 * 60 * 24 * 30,
     });
 
     return res;
