@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host");
+  const pathname = request.nextUrl.pathname;
   const userId = request.cookies.get("userId")?.value;
 
   // scanner subdomain
@@ -12,11 +13,15 @@ export function proxy(request: NextRequest) {
 
   // dashboard subdomain
   if (host === "app.getfideliza.com") {
+    // permitir login
+    if (pathname.startsWith("/login")) {
+      return NextResponse.next();
+    }
+
     if (!userId) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // dejar pasar la ruta normal
     return NextResponse.next();
   }
 
