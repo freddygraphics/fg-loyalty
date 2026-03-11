@@ -12,7 +12,10 @@ export default async function BusinessLayout({
   const { slug } = await params;
 
   const session = await getBusinessSession();
-  if (!session) redirect("/login");
+
+  if (!session) {
+    redirect("/login");
+  }
 
   const business = await prisma.business.findFirst({
     where: {
@@ -23,12 +26,10 @@ export default async function BusinessLayout({
 
   if (!business) return notFound();
 
-  // negocio desactivado
   if (!business.active) {
     redirect("/pricing");
   }
 
-  // trial expirado
   const trialExpired =
     business.status === "TRIALING" &&
     business.trialEndsAt &&
@@ -38,7 +39,6 @@ export default async function BusinessLayout({
     redirect("/pricing");
   }
 
-  // suscripción inválida
   if (!["ACTIVE", "TRIALING"].includes(business.status)) {
     redirect("/pricing");
   }
