@@ -2,19 +2,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  const host = request.headers.get("host");
+  const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
   const userId = request.cookies.get("userId")?.value;
 
+  // scanner subdomain
   if (host === "scan.getfideliza.com") {
     return NextResponse.rewrite(new URL("/scanner", request.url));
   }
 
+  // app dashboard
   if (host === "app.getfideliza.com") {
+    // permitir login
     if (pathname.startsWith("/login")) {
       return NextResponse.next();
     }
 
+    // si no hay sesión
     if (!userId) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
@@ -26,5 +30,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/:path*"],
+  matcher: ["/((?!_next|favicon.ico).*)"],
 };
