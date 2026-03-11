@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({
       success: true,
-      redirectTo: `/business/${business.slug}/dashboard`,
+      redirectTo: `https://app.getfideliza.com/business/${business.slug}/dashboard`,
     });
 
     // COOKIE PRO para subdominios
