@@ -13,11 +13,11 @@ export function proxy(request: NextRequest) {
   // dashboard subdomain
   if (host === "app.getfideliza.com") {
     if (!userId) {
-      const loginUrl = new URL("/login", request.url);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    return NextResponse.rewrite(new URL("/business/dashboard", request.url));
+    // dejar pasar la ruta normal
+    return NextResponse.next();
   }
 
   return NextResponse.next();

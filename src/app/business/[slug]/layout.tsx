@@ -12,7 +12,7 @@ export default async function BusinessLayout({
   const { slug } = await params;
 
   const session = await getBusinessSession();
-  if (!session) return notFound();
+  if (!session) redirect("/login");
 
   const business = await prisma.business.findFirst({
     where: {
