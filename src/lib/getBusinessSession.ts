@@ -6,7 +6,7 @@ export async function getBusinessSession() {
   const userId = cookieStore.get("userId")?.value;
 
   if (!userId) {
-    throw new Error("Unauthorized");
+    return null;
   }
 
   const user = await prisma.user.findUnique({
@@ -17,27 +17,19 @@ export async function getBusinessSession() {
   });
 
   if (!user || user.businesses.length === 0) {
-    throw new Error("Unauthorized");
+    return null;
   }
 
   const business = user.businesses[0];
 
-  // 🔥 Trial protection
-  if (
+  const trialExpired =
     business.status === "TRIALING" &&
     business.trialEndsAt &&
-    new Date() > business.trialEndsAt
-  ) {
-    return {
-      userId: user.id,
-      businessId: business.id,
-      trialExpired: true,
-    };
-  }
+    new Date() > business.trialEndsAt;
 
   return {
     userId: user.id,
     businessId: business.id,
-    trialExpired: false,
+    trialExpired,
   };
 }
