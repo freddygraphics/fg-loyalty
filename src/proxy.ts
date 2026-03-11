@@ -6,21 +6,20 @@ export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const userId = request.cookies.get("userId")?.value;
 
-  // scanner subdomain
+  // scanner
   if (host === "scan.getfideliza.com") {
     return NextResponse.rewrite(new URL("/scanner", request.url));
   }
 
-  // app dashboard
-  if (host === "app.getfideliza.com") {
-    // permitir login
-    if (pathname.startsWith("/login")) {
-      return NextResponse.next();
-    }
+  // login siempre en dominio principal
+  if (host === "app.getfideliza.com" && pathname.startsWith("/login")) {
+    return NextResponse.redirect(new URL("https://getfideliza.com/login"));
+  }
 
-    // si no hay sesión
+  // dashboard
+  if (host === "app.getfideliza.com") {
     if (!userId) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("https://getfideliza.com/login"));
     }
 
     return NextResponse.next();
