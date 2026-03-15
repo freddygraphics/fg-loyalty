@@ -44,39 +44,49 @@ model PlatformAdmin {
   role      String
   createdAt DateTime @default(now())
 }
-
 model Business {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
 
+  // PLAN
+
   plan      PlanType @default(STARTER)
   status    SubscriptionStatus @default(TRIALING)
 
-  stripeCustomerId String?   @unique
-  subscriptionId   String?   @unique
+  // STRIPE
+
+  stripeCustomerId String? @unique
+  subscriptionId   String? @unique
+  stripePriceId    String?
 
   trialEndsAt      DateTime?
-  currentPeriodEnd DateTime?   // ⭐ IMPORTANTE
+  currentPeriodEnd DateTime?
+
+  cancelAtPeriodEnd Boolean @default(false)
+
+  // LOYALTY SYSTEM
 
   goal      Int @default(10)
-
   earnStep  Int @default(1)
   limitMode String @default("cap")
   redeemMode String @default("subtract")
 
-  active    Boolean  @default(true)
+  // RELATIONS
 
   ownerId   String
-  owner     User     @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner     User @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   customers Customer[]
   cards     LoyaltyCard[]
   transactions PointTransaction[]
 
+  // META
+
   createdAt DateTime @default(now())
 
   @@index([ownerId])
+  @@index([subscriptionId])
 }
 
 
@@ -138,4 +148,8 @@ model PointTransaction {
   @@index([businessId])
   @@index([cardId])
   @@index([userId])
+}
+model StripeWebhookEvent {
+  id        String   @id
+  createdAt DateTime @default(now())
 }

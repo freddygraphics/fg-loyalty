@@ -1,15 +1,23 @@
-// app/business/[slug]/dashboard/layout.tsx
-
 import DashboardShell from "@/components/dashboard/DashboardShell";
+import prisma from "@/lib/db";
 
-export default async function DashboardLayout({
+export default async function Layout({
   children,
   params,
 }: {
   children: React.ReactNode;
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params; // 👈 IMPORTANTE
+  const { slug } = await params;
 
-  return <DashboardShell slug={slug}>{children}</DashboardShell>;
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { name: true },
+  });
+
+  return (
+    <DashboardShell slug={slug} businessName={business?.name ?? ""}>
+      {children}
+    </DashboardShell>
+  );
 }

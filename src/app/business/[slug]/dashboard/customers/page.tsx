@@ -35,11 +35,11 @@ export default function CustomersPage() {
       <h1 className="text-2xl font-bold">Customers</h1>
 
       {/* DESKTOP TABLE */}
-      <div className="hidden md:block bg-white border rounded-lg overflow-hidden">
+      <div className="hidden md:block bg-white border border-[#ededed] rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className=" bg-[#FBFBFB] border-b border-[#ededed]">
             <tr>
-              <th className="p-3 text-left">Customer</th>
+              <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Phone</th>
               <th className="p-3 text-right">Points</th>
               <th className="p-3 text-left">Last Scan</th>

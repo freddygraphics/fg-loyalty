@@ -1,9 +1,8 @@
-// components/dashboard/Sidebar.tsx
-
 "use client";
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -16,52 +15,80 @@ import {
 
 export default function Sidebar({ slug }: { slug: string }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
-  const nav = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "" },
-    { label: "Clientes", icon: Users, href: "/customers" },
-    { label: "Escanear", icon: QrCode, href: "/scan" },
-    { label: "Historial", icon: History, href: "/history" },
-    { label: "Configuración", icon: Settings, href: "/settings" },
+  const base = `/business/${slug}/dashboard`;
+
+  const links = [
+    { name: "Dashboard", icon: LayoutDashboard, href: base },
+    { name: "Customers", icon: Users, href: `${base}/customers` },
+
+    { name: "History", icon: History, href: `${base}/history` },
+    { name: "Settings", icon: Settings, href: `${base}/settings` },
   ];
 
   return (
     <>
-      {/* MOBILE BUTTON */}
-      <button onClick={() => setOpen(true)} className="lg:hidden p-3">
+      {/* MOBILE MENU BUTTON */}
+      <button
+        onClick={() => setOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-40 bg-white border shadow-sm p-2 rounded-lg"
+      >
         <Menu size={22} />
       </button>
 
       {/* MOBILE OVERLAY */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/30 z-40 md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
       {/* SIDEBAR */}
-      <aside className="w-64 border-r border-[#ededed] bg-[#FBFBFB] flex flex-col">
-        {/* CLOSE BUTTON MOBILE */}
-        <div className="flex justify-end p-4 lg:hidden">
-          <button onClick={() => setOpen(false)}>
-            <X size={22} />
+      <aside
+        className={`
+    fixed md:relative
+    top-0 left-0
+    h-screen md:h-auto
+    w-64
+    bg-[#FBFBFB]
+    z-50
+    transform transition-transform duration-300
+    ${open ? "translate-x-0" : "-translate-x-full"}
+    md:translate-x-0
+  `}
+      >
+        {/* HEADER */}
+        <div className="flex items-center justify-between p-6">
+          <button className="md:hidden" onClick={() => setOpen(false)}>
+            <X size={20} />
           </button>
         </div>
 
         {/* NAV */}
-        <nav className="flex-1 px-3 space-y-1 mt-4">
-          {nav.map((item) => {
-            const Icon = item.icon;
+        <nav className="p-4 space-y-2 overflow-y-auto">
+          {links.map((link) => {
+            const Icon = link.icon;
+            const active = pathname === link.href;
 
             return (
               <Link
-                key={item.label}
-                href={`/business/${slug}/dashboard${item.href}`}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition"
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`
+                  flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium
+                  transition
+                  ${
+                    active
+                      ? "bg-gray-100 text-black"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                  }
+                `}
               >
                 <Icon size={18} />
-                {item.label}
+                {link.name}
               </Link>
             );
           })}

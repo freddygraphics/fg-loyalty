@@ -23,7 +23,7 @@ export default function BusinessQR({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col items-center gap-4">
       {/* QR container */}
-      <div ref={qrRef} className="bg-white p-6 rounded-xl ">
+      <div ref={qrRef} className="bg-white ">
         <QRCode value={url} size={200} />
       </div>
 

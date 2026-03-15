@@ -1,52 +1,73 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
-export default function Topbar({ slug }: { slug: string }) {
+export default function Topbar({
+  businessName,
+  slug,
+}: {
+  businessName: string;
+  slug: string;
+}) {
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const openBillingPortal = () => {
+    window.location.href = `/api/stripe/portal?slug=${slug}`;
+  };
 
   return (
-    <header className="border-b border-[#ededed] ">
-      <div className="mx-auto max-w-7xl px-6 py-4 flex justify-between items-center">
-        {/* Logo */}
-        <Link
-          href={`/business/${slug}/dashboard`}
-          className="text-lg font-semibold text-gray-900"
-        >
-          Fideliza{" "}
-        </Link>
+    <div className="w-full border-b border-[#ededed] bg-white">
+      <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        {/* LEFT */}
+        <div className="font-semibold text-lg">Fideliza</div>
 
-        {/* Admin Menu */}
-        <div className="relative">
+        {/* RIGHT */}
+        <div ref={menuRef} className="relative">
           <button
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700"
+            className="flex items-center gap-2 text-sm font-medium"
           >
-            Admin
+            {businessName}
             <ChevronDown size={16} />
           </button>
 
           {open && (
-            <div className="absolute right-0 mt-2 w-44 bg-white border border-[#ededed] rounded-lg shadow-sm">
-              <Link
-                href={`/business/${slug}/billing`}
-                className="block px-4 py-2 text-sm hover:bg-gray-50"
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-[#ededed] rounded-lg shadow-lg">
+              <button
+                onClick={openBillingPortal}
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
               >
-                Billing
-              </Link>
+                Manage Billing
+              </button>
 
-              <Link
-                href="/logout"
-                className="block px-4 py-2 text-sm hover:bg-gray-50"
+              <button
+                onClick={() => {
+                  window.location.href = "/logout";
+                }}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
               >
-                Cerrar sesión
-              </Link>
+                Logout
+              </button>
             </div>
           )}
         </div>
       </div>
-    </header>
+    </div>
   );
 }

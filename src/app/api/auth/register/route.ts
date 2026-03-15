@@ -6,11 +6,19 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+// convierte nombre a slug
 function slugify(text: string) {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
+}
+
+// genera slug único
+function uniqueSlug(name: string) {
+  const base = slugify(name);
+  const random = Math.random().toString(36).substring(2, 6);
+  return `${base}-${random}`;
 }
 
 export async function POST(req: Request) {
@@ -36,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const slug = slugify(businessName);
+    const slug = uniqueSlug(businessName);
 
     // 👤 Create user
     const user = await prisma.user.create({

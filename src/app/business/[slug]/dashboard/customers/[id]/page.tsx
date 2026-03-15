@@ -53,20 +53,22 @@ export default function CustomerDetailPage() {
   if (!data) return <div>Customer not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-1">
       {/* HEADER */}
-      <div className="bg-white border rounded-lg p-5">
+      <div className="bg-white  rounded-lg p-2">
         <h1 className="text-2xl font-bold">{data.name}</h1>
         <p className="text-gray-500">{data.phone}</p>
         <p className="mt-2 text-lg font-semibold">Points: {data.points}</p>
       </div>
 
       {/* HISTORY */}
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="border-b px-5 py-3 font-semibold">Scan History</div>
+      <div className="bg-white border  border-[#ededed] rounded-lg overflow-hidden">
+        <div className="border-b  border-[#ededed] px-5 py-3 font-semibold">
+          Scan History
+        </div>
 
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-gray-50  border-[#ededed] border-b">
             <tr>
               <th className="p-3 text-left">Date</th>
               <th className="p-3 text-left">Type</th>

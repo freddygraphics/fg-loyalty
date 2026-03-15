@@ -6,6 +6,7 @@ import MetricCard from "@/components/dashboard/MetricCard";
 import { Gift, Users, ScanLine, Target } from "lucide-react";
 import BusinessQR from "@/components/dashboard/BusinessQR";
 import BillingButton from "@/components/dashboard/BillingButton";
+
 export default async function DashboardPage({
   params,
 }: {
@@ -17,6 +18,7 @@ export default async function DashboardPage({
     where: { slug },
     select: {
       id: true,
+      name: true,
       goal: true,
     },
   });
@@ -51,7 +53,7 @@ export default async function DashboardPage({
       {/* LEFT SIDE */}
       <div className="lg:col-span-3 space-y-6">
         {/* Quick Access */}
-        <div className="  rounded-lg">
+        <div className="rounded-lg">
           <div className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <MetricCard
@@ -82,17 +84,19 @@ export default async function DashboardPage({
         </div>
 
         {/* Area grande */}
-        <div className=" border border-[#ededed] rounded-lg h-[500px]" />
+        <div className="border border-[#ededed] rounded-lg h-[500px]" />
       </div>
 
       {/* RIGHT SIDE QR */}
       <div className="border border-[#ededed] rounded-lg overflow-hidden">
-        {/* Header */}
-        <div className="p-6 text-xl font-semibold bg-[#FBFBFB] border-b border-[#ededed]">
-          Business Name
+        <div className="p-5 bg-[#FBFBFB] border-b border-[#ededed]">
+          <h2 className="text-xs text-[#666666]">Business Name</h2>
+
+          <h2 className="text-xl font-semibold leading-tight">
+            {business.name}
+          </h2>
         </div>
 
-        {/* QR Section */}
         <div className="p-6 flex justify-center">
           <BusinessQR slug={slug} />
         </div>
