@@ -46,67 +46,94 @@ export default function SettingsPage() {
   if (loading) return <div>Loading settings…</div>;
 
   return (
-    <div className="max-w-xl space-y-10">
-      {/* 🎯 LOYALTY */}
+    <div className="max-w-2xl space-y-10">
       <section>
-        <h2 className="text-2xl font-bold mb-4">History</h2>
+        <h2 className="text-2xl font-bold mb-4">Settings</h2>
 
-        <div className="bg-white  border-[#ededed]  border rounded-lg p-5 space-y-4">
-          <label className="block">
-            Goal
+        <div className="bg-white border border-[#ededed] rounded-lg p-6">
+          {/* GOAL */}
+          <div className="flex items-start justify-between py-5">
+            <div>
+              <p className="font-medium">Goal</p>
+              <p className="text-sm text-gray-500">
+                Number of points required to redeem the reward.
+              </p>
+            </div>
+
             <input
               type="number"
-              className="input w-full"
               value={form.goal}
               onChange={(e) =>
                 setForm({ ...form, goal: Number(e.target.value) })
               }
+              className="w-24 border border-[#ededed]  rounded-md px-3 py-2 text-right"
             />
-          </label>
+          </div>
 
-          <label className="block">
-            Earn step
+          {/* EARN STEP */}
+          <div className="flex items-start justify-between py-5">
+            <div>
+              <p className="font-medium">Earn step</p>
+              <p className="text-sm text-gray-500">
+                Points given each time a customer is scanned.
+              </p>
+            </div>
+
             <input
               type="number"
-              className="input w-full"
               value={form.earnStep}
               onChange={(e) =>
                 setForm({ ...form, earnStep: Number(e.target.value) })
               }
+              className="w-24 border border-[#ededed]  rounded-md px-3 py-2 text-right"
             />
-          </label>
+          </div>
 
-          <label className="block">
-            Limit mode
+          {/* LIMIT MODE */}
+          <div className="flex items-start justify-between py-5">
+            <div>
+              <p className="font-medium">Limit mode</p>
+              <p className="text-sm text-gray-500">
+                Controls whether points stop when the goal is reached.
+              </p>
+            </div>
+
             <select
-              className="input w-full"
               value={form.limitMode}
               onChange={(e) => setForm({ ...form, limitMode: e.target.value })}
+              className="border border-[#ededed]  rounded-md px-3 py-2 w-32"
             >
               <option value="cap">Cap</option>
               <option value="block">Block</option>
             </select>
-          </label>
+          </div>
 
-          <label className="block">
-            Redeem mode
+          {/* REDEEM MODE */}
+          <div className="flex items-start justify-between py-5">
+            <div>
+              <p className="font-medium">Redeem mode</p>
+              <p className="text-sm text-gray-500">
+                What happens after a reward is redeemed.
+              </p>
+            </div>
+
             <select
-              className="input w-full"
               value={form.redeemMode}
               onChange={(e) => setForm({ ...form, redeemMode: e.target.value })}
+              className="border border-[#ededed]  rounded-md px-3 py-2 w-32"
             >
               <option value="reset">Reset</option>
               <option value="carry">Carry</option>
             </select>
-          </label>
-
-          <button
-            onClick={() => setShowConfirm(true)}
-            className="bg-black text-white px-4 py-2 rounded"
-          >
-            Save changes
-          </button>
+          </div>
         </div>
+
+        <button
+          onClick={() => setShowConfirm(true)}
+          className="mt-5 bg-black text-white px-4 py-2 rounded"
+        >
+          Save changes
+        </button>
       </section>
 
       {/* ⚠️ MODAL */}

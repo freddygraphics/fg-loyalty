@@ -11,21 +11,40 @@ export default async function BusinessLayout({
 }) {
   const { slug } = await params;
 
+  const isDev = process.env.NODE_ENV === "development";
+
+  let business;
+
+  // Obtener sesión
   const session = await getBusinessSession();
 
-  if (!session) {
-    redirect("/login");
+  // -----------------------------
+  // DEVELOPMENT MODE
+  // -----------------------------
+  if (isDev) {
+    business = await prisma.business.findUnique({
+      where: { slug },
+    });
+  } else {
+    // -----------------------------
+    // PRODUCTION MODE
+    // -----------------------------
+    if (!session) {
+      redirect("/login");
+    }
+
+    business = await prisma.business.findFirst({
+      where: {
+        slug,
+        id: session.businessId,
+      },
+    });
   }
 
-  const business = await prisma.business.findFirst({
-    where: {
-      slug,
-      id: session.businessId,
-    },
-  });
-
   if (!business) {
-    notFound();
+    return (
+      <div style={{ padding: 40 }}>Business not found for slug: {slug}</div>
+    );
   }
 
   const now = new Date();
@@ -40,7 +59,7 @@ export default async function BusinessLayout({
     business.currentPeriodEnd &&
     business.currentPeriodEnd > now;
 
-  if (!trialValid && !subscriptionActive) {
+  if (!isDev && !trialValid && !subscriptionActive) {
     redirect("/pricing");
   }
 

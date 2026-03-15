@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
-      redirectTo: `https://app.getfideliza.com/business/${business.slug}/dashboard`,
+      redirectTo: `/business/${business.slug}/dashboard`,
     });
 
     // Secure cookie
@@ -78,9 +78,8 @@ export async function POST(req: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      domain: ".getfideliza.com",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30,
     });
 
     return response;

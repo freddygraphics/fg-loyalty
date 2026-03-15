@@ -1,93 +1,45 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import prisma from "@/lib/db";
 import { verifySession } from "@/lib/session";
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
 
-  const loginUrl = "https://getfideliza.com/login";
-  const billingUrl = "https://getfideliza.com/billing";
+  // ✅ En localhost NO bloquear nada
+  if (host.includes("localhost") || host.startsWith("127.0.0.1")) {
+    return NextResponse.next();
+  }
 
-  /* -----------------------------
-     IGNORE STATIC / API
-  ----------------------------- */
-
+  // ✅ Rutas públicas
   if (
-    pathname.startsWith("/_next") ||
+    pathname === "/" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/billing") ||
     pathname.startsWith("/api") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/billing"
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon")
   ) {
     return NextResponse.next();
   }
 
-  /* -----------------------------
-     SCANNER DOMAIN
-  ----------------------------- */
+  // ✅ Solo proteger privadas en producción
+  const sessionToken = request.cookies.get("session")?.value;
 
-  if (host === "scan.getfideliza.com") {
-    return NextResponse.rewrite(new URL("/scanner", request.url));
+  if (!sessionToken) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  /* -----------------------------
-     DASHBOARD PROTECTION
-  ----------------------------- */
+  const session = verifySession(sessionToken);
 
-  if (host === "app.getfideliza.com") {
-    const sessionToken = request.cookies.get("session")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.redirect(new URL(loginUrl));
-    }
-
-    const session = verifySession(sessionToken);
-
-    if (!session) {
-      return NextResponse.redirect(new URL(loginUrl));
-    }
-
-    const business = await prisma.business.findUnique({
-      where: { id: session.businessId },
-      select: {
-        status: true,
-        trialEndsAt: true,
-        currentPeriodEnd: true,
-      },
-    });
-
-    if (!business) {
-      return NextResponse.redirect(new URL(loginUrl));
-    }
-
-    const now = new Date();
-
-    const trialValid =
-      business.status === "TRIALING" &&
-      business.trialEndsAt &&
-      business.trialEndsAt > now;
-
-    const activeSubscription =
-      business.status === "ACTIVE" &&
-      business.currentPeriodEnd &&
-      business.currentPeriodEnd > now;
-
-    const blockedStatus =
-      business.status === "CANCELED" || business.status === "PAST_DUE";
-
-    if (blockedStatus || (!trialValid && !activeSubscription)) {
-      return NextResponse.redirect(new URL(billingUrl));
-    }
-
-    return NextResponse.next();
+  if (!session) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/business/:path*", "/dashboard/:path*", "/scanner/:path*"],
 };

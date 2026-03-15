@@ -1,18 +1,16 @@
-// app/business/[slug]/dashboard/page.tsx
-
 import prisma from "@/lib/db";
-import { notFound } from "next/navigation";
 import MetricCard from "@/components/dashboard/MetricCard";
 import { Gift, Users, ScanLine, Target } from "lucide-react";
 import BusinessQR from "@/components/dashboard/BusinessQR";
-import BillingButton from "@/components/dashboard/BillingButton";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params; // 👈 IMPORTANTE
+  const { slug } = await params;
 
   const business = await prisma.business.findUnique({
     where: { slug },
@@ -23,7 +21,9 @@ export default async function DashboardPage({
     },
   });
 
-  if (!business) return notFound();
+  if (!business) {
+    return <div className="p-10 text-red-500">Business not found: {slug}</div>;
+  }
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -48,46 +48,41 @@ export default async function DashboardPage({
   });
 
   const pointsToday = pointsAgg._sum.points ?? 0;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* LEFT SIDE */}
       <div className="lg:col-span-3 space-y-6">
-        {/* Quick Access */}
-        <div className="rounded-lg">
-          <div className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <MetricCard
-                title="Scans hoy"
-                value={scansToday}
-                icon={<ScanLine size={18} />}
-              />
+        <div className="p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <MetricCard
+              title="Scans hoy"
+              value={scansToday}
+              icon={<ScanLine size={18} />}
+            />
 
-              <MetricCard
-                title="Puntos hoy"
-                value={pointsToday}
-                icon={<Gift size={18} />}
-              />
+            <MetricCard
+              title="Puntos hoy"
+              value={pointsToday}
+              icon={<Gift size={18} />}
+            />
 
-              <MetricCard
-                title="Clientes"
-                value={customersCount}
-                icon={<Users size={18} />}
-              />
+            <MetricCard
+              title="Clientes"
+              value={customersCount}
+              icon={<Users size={18} />}
+            />
 
-              <MetricCard
-                title="Meta"
-                value={business.goal}
-                icon={<Target size={18} />}
-              />
-            </div>
+            <MetricCard
+              title="Meta"
+              value={business.goal}
+              icon={<Target size={18} />}
+            />
           </div>
         </div>
 
-        {/* Area grande */}
         <div className="border border-[#ededed] rounded-lg h-[500px]" />
       </div>
 
-      {/* RIGHT SIDE QR */}
       <div className="border border-[#ededed] rounded-lg overflow-hidden">
         <div className="p-5 bg-[#FBFBFB] border-b border-[#ededed]">
           <h2 className="text-xs text-[#666666]">Business Name</h2>
