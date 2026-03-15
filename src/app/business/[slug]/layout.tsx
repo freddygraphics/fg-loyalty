@@ -7,14 +7,18 @@ export default async function BusinessLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = await params;
+  const { slug } = params;
 
+  // SESSION
   const session = await getBusinessSession();
 
-  if (!session) redirect("/login");
+  if (!session) {
+    redirect("/login");
+  }
 
+  // BUSINESS
   const business = await prisma.business.findFirst({
     where: {
       slug,
@@ -22,23 +26,30 @@ export default async function BusinessLayout({
     },
   });
 
-  if (!business) return notFound();
+  if (!business) {
+    notFound();
+  }
 
+  // TRIAL CHECK
   const trialExpired =
     business.status === "TRIALING" &&
     business.trialEndsAt &&
     new Date() > business.trialEndsAt;
 
-  if (trialExpired || business.status === "CANCELED") {
-    redirect("/pricing");
-  }
-
-  if (!["ACTIVE", "TRIALING"].includes(business.status)) {
+  // BLOCK ACCESS IF:
+  // trial expired
+  // canceled
+  // payment failed
+  if (
+    trialExpired ||
+    business.status === "CANCELED" ||
+    business.status === "PAST_DUE"
+  ) {
     redirect("/pricing");
   }
 
   return (
-    <div className="min-h-screen bg-[#ffffff]">
+    <div className="min-h-screen bg-white">
       <main className="mx-auto max-w-7xl p-6">{children}</main>
     </div>
   );

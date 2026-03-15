@@ -4,10 +4,25 @@ import prisma from "@/lib/db";
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") || "";
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
   const userId = request.cookies.get("userId")?.value;
   const businessId = request.cookies.get("businessId")?.value;
+
+  const loginUrl = "https://getfideliza.com/login";
+  const billingUrl = "https://getfideliza.com/billing";
+
+  /* -----------------------------
+     STATIC / PUBLIC ROUTES
+  ----------------------------- */
+
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/favicon.ico")
+  ) {
+    return NextResponse.next();
+  }
 
   /* -----------------------------
      SCANNER DOMAIN
@@ -22,7 +37,7 @@ export async function proxy(request: NextRequest) {
   ----------------------------- */
 
   if (host === "app.getfideliza.com" && pathname.startsWith("/login")) {
-    return NextResponse.redirect(new URL("https://getfideliza.com/login"));
+    return NextResponse.redirect(loginUrl);
   }
 
   /* -----------------------------
@@ -30,12 +45,8 @@ export async function proxy(request: NextRequest) {
   ----------------------------- */
 
   if (host === "app.getfideliza.com") {
-    if (!userId) {
-      return NextResponse.redirect(new URL("https://getfideliza.com/login"));
-    }
-
-    if (!businessId) {
-      return NextResponse.redirect(new URL("https://getfideliza.com/login"));
+    if (!userId || !businessId) {
+      return NextResponse.redirect(loginUrl);
     }
 
     const business = await prisma.business.findUnique({
@@ -48,7 +59,7 @@ export async function proxy(request: NextRequest) {
     });
 
     if (!business) {
-      return NextResponse.redirect(new URL("https://getfideliza.com/login"));
+      return NextResponse.redirect(loginUrl);
     }
 
     const now = new Date();
@@ -58,13 +69,16 @@ export async function proxy(request: NextRequest) {
       business.trialEndsAt &&
       business.trialEndsAt > now;
 
-    const activeSubscription =
+    const subscriptionActive =
       business.status === "ACTIVE" &&
       business.currentPeriodEnd &&
       business.currentPeriodEnd > now;
 
-    if (!trialValid && !activeSubscription) {
-      return NextResponse.redirect(new URL("https://getfideliza.com/billing"));
+    const blockedStatus =
+      business.status === "CANCELED" || business.status === "PAST_DUE";
+
+    if (blockedStatus || (!trialValid && !subscriptionActive)) {
+      return NextResponse.redirect(billingUrl);
     }
 
     return NextResponse.next();
