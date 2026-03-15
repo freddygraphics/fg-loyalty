@@ -7,18 +7,16 @@ export default async function BusinessLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
 
-  // SESSION
   const session = await getBusinessSession();
 
   if (!session) {
     redirect("/login");
   }
 
-  // BUSINESS
   const business = await prisma.business.findFirst({
     where: {
       slug,
@@ -30,21 +28,19 @@ export default async function BusinessLayout({
     notFound();
   }
 
-  // TRIAL CHECK
-  const trialExpired =
+  const now = new Date();
+
+  const trialValid =
     business.status === "TRIALING" &&
     business.trialEndsAt &&
-    new Date() > business.trialEndsAt;
+    business.trialEndsAt > now;
 
-  // BLOCK ACCESS IF:
-  // trial expired
-  // canceled
-  // payment failed
-  if (
-    trialExpired ||
-    business.status === "CANCELED" ||
-    business.status === "PAST_DUE"
-  ) {
+  const subscriptionActive =
+    business.status === "ACTIVE" &&
+    business.currentPeriodEnd &&
+    business.currentPeriodEnd > now;
+
+  if (!trialValid && !subscriptionActive) {
     redirect("/pricing");
   }
 
