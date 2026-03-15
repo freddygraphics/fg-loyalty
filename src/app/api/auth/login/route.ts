@@ -62,27 +62,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔐 Create signed JWT session
+    // 🔐 Crear token JWT
     const token = createSession({
       userId: user.id,
       businessId: business.id,
     });
 
-    const response = NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       redirectTo: `/business/${business.slug}/dashboard`,
     });
 
-    // Secure cookie
-    response.cookies.set("session", token, {
+    // 🍪 Cookie segura
+    res.cookies.set({
+      name: "session",
+      value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: 60 * 60 * 24 * 30, // 30 días
     });
 
-    return response;
+    return res;
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 

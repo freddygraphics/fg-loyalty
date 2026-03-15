@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
-import { getBusinessSession } from "@/lib/getBusinessSession";
-import { notFound, redirect } from "next/navigation";
+import { getSession } from "@/lib/getSession";
+import { redirect } from "next/navigation";
+import type { Business } from "@prisma/client";
 
 export default async function BusinessLayout({
   children,
@@ -13,22 +14,15 @@ export default async function BusinessLayout({
 
   const isDev = process.env.NODE_ENV === "development";
 
-  let business;
+  let business: Business | null = null;
 
-  // Obtener sesión
-  const session = await getBusinessSession();
+  const session = await getSession();
 
-  // -----------------------------
-  // DEVELOPMENT MODE
-  // -----------------------------
   if (isDev) {
     business = await prisma.business.findUnique({
       where: { slug },
     });
   } else {
-    // -----------------------------
-    // PRODUCTION MODE
-    // -----------------------------
     if (!session) {
       redirect("/login");
     }
@@ -42,9 +36,11 @@ export default async function BusinessLayout({
   }
 
   if (!business) {
-    return (
-      <div style={{ padding: 40 }}>Business not found for slug: {slug}</div>
-    );
+    redirect("/login");
+  }
+
+  if (!isDev && session && session.businessId !== business.id) {
+    redirect("/login");
   }
 
   const now = new Date();

@@ -1,18 +1,32 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-const SECRET = process.env.AUTH_SECRET!;
+const SECRET = process.env.AUTH_SECRET as string;
 
-export function createSession(payload: { userId: string; businessId: string }) {
+if (!SECRET) {
+  throw new Error("AUTH_SECRET is not defined");
+}
+
+type SessionPayload = {
+  userId: string;
+  businessId: string;
+};
+
+export function createSession(payload: SessionPayload) {
   return jwt.sign(payload, SECRET, {
     expiresIn: "30d",
+    issuer: "fideliza",
   });
 }
 
-export function verifySession(token: string) {
+export function verifySession(token: string): SessionPayload | null {
   try {
-    return jwt.verify(token, SECRET) as {
-      userId: string;
-      businessId: string;
+    const decoded = jwt.verify(token, SECRET, {
+      issuer: "fideliza",
+    }) as JwtPayload;
+
+    return {
+      userId: decoded.userId as string,
+      businessId: decoded.businessId as string,
     };
   } catch {
     return null;

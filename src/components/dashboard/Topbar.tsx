@@ -11,6 +11,7 @@ export default function Topbar({
   slug: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,24 +22,34 @@ export default function Topbar({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const logout = async () => {
+    if (loading) return;
+
     try {
+      setLoading(true);
+
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
 
-      // redirect limpio
+      // cerrar menú
+      setOpen(false);
+
+      // redirect seguro
       window.location.replace("/login");
     } catch (err) {
       console.error("Logout error:", err);
+      setLoading(false);
     }
   };
 
   const openBillingPortal = () => {
+    setOpen(false);
     window.location.href = `/api/stripe/portal?slug=${slug}`;
   };
 
@@ -51,7 +62,7 @@ export default function Topbar({
         {/* RIGHT */}
         <div ref={menuRef} className="relative">
           <button
-            onClick={() => setOpen(!open)}
+            onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-2 text-sm font-medium"
           >
             {businessName}
@@ -69,9 +80,10 @@ export default function Topbar({
 
               <button
                 onClick={logout}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                disabled={loading}
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               >
-                Logout
+                {loading ? "Logging out..." : "Logout"}
               </button>
             </div>
           )}

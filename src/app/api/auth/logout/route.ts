@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const response = NextResponse.json({ success: true });
+  const res = NextResponse.json({ success: true });
 
-  // eliminar cookies de sesión
-  response.cookies.delete("userId");
-  response.cookies.delete("businessId");
+  res.cookies.set({
+    name: "session",
+    value: "",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
 
-  // seguridad extra (opcional si usas JWT o session)
-  response.cookies.delete("token");
-
-  return response;
+  return res;
 }
