@@ -7,7 +7,7 @@ import * as htmlToImage from "html-to-image";
 export default function BusinessQR({ slug }: { slug: string }) {
   const qrRef = useRef<HTMLDivElement>(null);
 
-  const url = `https://app.getfideliza.com/join/${slug}`;
+  const url = `https://getfideliza.com/join/${slug}`;
 
   const downloadQR = async () => {
     if (!qrRef.current) return;
