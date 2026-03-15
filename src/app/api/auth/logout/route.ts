@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const response = NextResponse.json({
-    success: true,
-    redirectTo: "https://getfideliza.com/login",
-  });
+  const response = NextResponse.json({ success: true });
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    domain: ".getfideliza.com",
-    path: "/",
-    maxAge: 0, // elimina cookie
-  };
+  // eliminar cookies de sesión
+  response.cookies.delete("userId");
+  response.cookies.delete("businessId");
 
-  response.cookies.set("userId", "", cookieOptions);
-  response.cookies.set("businessId", "", cookieOptions);
+  // seguridad extra (opcional si usas JWT o session)
+  response.cookies.delete("token");
 
   return response;
 }

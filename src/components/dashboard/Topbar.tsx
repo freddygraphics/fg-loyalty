@@ -3,19 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
-async function logout() {
-  try {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch (err) {
-    console.error("Logout error:", err);
-  }
-
-  window.location.href = "https://getfideliza.com/login";
-}
-
 export default function Topbar({
   businessName,
   slug,
@@ -34,11 +21,22 @@ export default function Topbar({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      // redirect limpio
+      window.location.replace("/login");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   const openBillingPortal = () => {
     window.location.href = `/api/stripe/portal?slug=${slug}`;
