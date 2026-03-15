@@ -3,6 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
+async function logout() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+
+  window.location.href = "https://getfideliza.com/login";
+}
+
 export default function Topbar({
   businessName,
   slug,
@@ -57,10 +70,8 @@ export default function Topbar({
               </button>
 
               <button
-                onClick={() => {
-                  window.location.href = "/logout";
-                }}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                onClick={logout}
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
               >
                 Logout
               </button>

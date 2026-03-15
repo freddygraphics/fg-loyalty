@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/db";
+import { verifySession } from "@/lib/session";
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") || "";
-  const { pathname } = request.nextUrl;
-
-  const userId = request.cookies.get("userId")?.value;
-  const businessId = request.cookies.get("businessId")?.value;
+  const pathname = request.nextUrl.pathname;
 
   const loginUrl = "https://getfideliza.com/login";
   const billingUrl = "https://getfideliza.com/billing";
 
   /* -----------------------------
-     STATIC / PUBLIC ROUTES
+     IGNORE STATIC / API
   ----------------------------- */
 
   if (
@@ -33,24 +31,24 @@ export async function proxy(request: NextRequest) {
   }
 
   /* -----------------------------
-     LOGIN REDIRECT
-  ----------------------------- */
-
-  if (host === "app.getfideliza.com" && pathname.startsWith("/login")) {
-    return NextResponse.redirect(loginUrl);
-  }
-
-  /* -----------------------------
      DASHBOARD PROTECTION
   ----------------------------- */
 
   if (host === "app.getfideliza.com") {
-    if (!userId || !businessId) {
-      return NextResponse.redirect(loginUrl);
+    const sessionToken = request.cookies.get("session")?.value;
+
+    if (!sessionToken) {
+      return NextResponse.redirect(new URL(loginUrl));
+    }
+
+    const session = verifySession(sessionToken);
+
+    if (!session) {
+      return NextResponse.redirect(new URL(loginUrl));
     }
 
     const business = await prisma.business.findUnique({
-      where: { id: businessId },
+      where: { id: session.businessId },
       select: {
         status: true,
         trialEndsAt: true,
@@ -59,7 +57,7 @@ export async function proxy(request: NextRequest) {
     });
 
     if (!business) {
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL(loginUrl));
     }
 
     const now = new Date();
@@ -69,7 +67,7 @@ export async function proxy(request: NextRequest) {
       business.trialEndsAt &&
       business.trialEndsAt > now;
 
-    const subscriptionActive =
+    const activeSubscription =
       business.status === "ACTIVE" &&
       business.currentPeriodEnd &&
       business.currentPeriodEnd > now;
@@ -77,8 +75,8 @@ export async function proxy(request: NextRequest) {
     const blockedStatus =
       business.status === "CANCELED" || business.status === "PAST_DUE";
 
-    if (blockedStatus || (!trialValid && !subscriptionActive)) {
-      return NextResponse.redirect(billingUrl);
+    if (blockedStatus || (!trialValid && !activeSubscription)) {
+      return NextResponse.redirect(new URL(billingUrl));
     }
 
     return NextResponse.next();
