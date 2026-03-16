@@ -18,17 +18,17 @@ export function createSession(payload: SessionPayload) {
   });
 }
 
-export function verifySession(token: string): SessionPayload | null {
-  try {
-    const decoded = jwt.verify(token, SECRET, {
-      issuer: "fideliza",
-    }) as JwtPayload;
+export function verifySession(token: string): SessionPayload {
+  const decoded = jwt.verify(token, SECRET, {
+    issuer: "fideliza",
+  }) as JwtPayload;
 
-    return {
-      userId: decoded.userId as string,
-      businessId: decoded.businessId as string,
-    };
-  } catch {
-    return null;
+  if (!decoded.userId || !decoded.businessId) {
+    throw new Error("Invalid session payload");
   }
+
+  return {
+    userId: decoded.userId as string,
+    businessId: decoded.businessId as string,
+  };
 }

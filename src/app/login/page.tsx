@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+
+type LoginResponse = {
+  success?: boolean;
+  redirect?: string;
+  redirectTo?: string;
+  error?: string;
+};
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -16,28 +24,50 @@ export default function LoginPage() {
 
     const form = new FormData(e.currentTarget);
 
+    const email = String(form.get("email") || "")
+      .toLowerCase()
+      .trim();
+    const password = String(form.get("password") || "");
+
+    if (!email || !password) {
+      setError("Email y contraseña son requeridos");
+      setLoading(false);
+      return;
+    }
+
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         credentials: "include",
+        signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: String(form.get("email")).toLowerCase(),
-          password: form.get("password"),
+          email,
+          password,
         }),
       });
 
-      const data = await res.json().catch(() => ({}));
+      let data: LoginResponse = {};
+
+      try {
+        data = await res.json();
+      } catch {}
 
       if (!res.ok) {
-        setError(data?.error || "Credenciales inválidas");
+        setError(data.error || "Credenciales inválidas");
         setLoading(false);
         return;
       }
 
-      // 🔥 REDIRECT PRO
       const redirect = data.redirect || data.redirectTo;
 
       if (redirect) {
@@ -45,9 +75,12 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = "/dashboard";
-    } catch (err) {
-      setError("Error inesperado. Intenta nuevamente.");
+      window.location.href = "/";
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        setError("Error inesperado. Intenta nuevamente.");
+      }
+
       setLoading(false);
     }
   }
@@ -65,7 +98,9 @@ export default function LoginPage() {
             name="email"
             type="email"
             placeholder="Email"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            autoComplete="email"
+            disabled={loading}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-60"
             required
           />
 
@@ -73,7 +108,9 @@ export default function LoginPage() {
             name="password"
             type="password"
             placeholder="Password"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            autoComplete="current-password"
+            disabled={loading}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-60"
             required
           />
         </div>
@@ -81,6 +118,7 @@ export default function LoginPage() {
         {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
         <button
+          type="submit"
           disabled={loading}
           className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-60"
         >
