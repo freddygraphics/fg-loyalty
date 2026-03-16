@@ -17,7 +17,7 @@ export function middleware(req: NextRequest) {
   }
 
   // Leer cookie
-  const session = req.cookies.get("owner_session");
+  const session = req.cookies.get("owner_session")?.value;
 
   if (!session) {
     const loginUrl = new URL("/login", req.url);

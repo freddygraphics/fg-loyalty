@@ -79,8 +79,8 @@ export async function POST(req: Request) {
       name: "owner_session",
       value: token,
       httpOnly: true,
-      secure: true,
-      sameSite: "lax",
+      secure: true, // obligatorio en producción
+      sameSite: "none", // importante para Vercel Edge
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
