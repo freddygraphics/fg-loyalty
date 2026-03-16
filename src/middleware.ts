@@ -1,33 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySession } from "@/lib/session";
 
-export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  const publicRoutes = ["/login", "/register", "/"];
-
-  if (publicRoutes.includes(pathname) || pathname.startsWith("/api")) {
+  // -----------------------------
+  // PUBLIC ROUTES
+  // -----------------------------
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon")
+  ) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("session")?.value;
-
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  const session = verifySession(token);
+  // -----------------------------
+  // CHECK SESSION COOKIE
+  // -----------------------------
+  const session = req.cookies.get("session");
 
   if (!session) {
-    const res = NextResponse.redirect(new URL("/login", request.url));
-    res.cookies.delete("session");
-    return res;
+    const loginUrl = new URL("/login", req.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/business/:path*", "/dashboard/:path*", "/scanner/:path*"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

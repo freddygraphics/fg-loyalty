@@ -1,10 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,7 +19,9 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           email: String(form.get("email")).toLowerCase(),
           password: form.get("password"),
@@ -36,7 +36,15 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace(data.redirectTo);
+      // 🔥 REDIRECT PRO
+      const redirect = data.redirect || data.redirectTo;
+
+      if (redirect) {
+        window.location.href = redirect;
+        return;
+      }
+
+      window.location.href = "/dashboard";
     } catch (err) {
       setError("Error inesperado. Intenta nuevamente.");
       setLoading(false);
