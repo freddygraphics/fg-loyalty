@@ -21,7 +21,7 @@ export function middleware(req: NextRequest) {
   // -----------------------------
   // CHECK SESSION COOKIE
   // -----------------------------
-  const session = req.cookies.get("session")?.value;
+  const session = req.cookies.get("owner_session")?.value;
 
   if (!session) {
     const loginUrl = new URL("/login", req.url);
