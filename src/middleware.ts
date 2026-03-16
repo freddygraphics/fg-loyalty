@@ -4,9 +4,7 @@ import type { NextRequest } from "next/server";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // -----------------------------
-  // PUBLIC ROUTES
-  // -----------------------------
+  // Rutas públicas
   if (
     pathname === "/" ||
     pathname.startsWith("/login") ||
@@ -18,15 +16,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // -----------------------------
-  // READ COOKIE MANUALLY
-  // -----------------------------
-  const cookieHeader = req.headers.get("cookie") || "";
+  // Leer cookie
+  const session = req.cookies.get("owner_session");
 
-  const hasSession = cookieHeader.includes("owner_session=");
-
-  if (!hasSession) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  if (!session) {
+    const loginUrl = new URL("/login", req.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
