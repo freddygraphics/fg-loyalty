@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔐 Crear token JWT
+    // 🔐 Crear JWT
     const token = createSession({
       userId: user.id,
       businessId: business.id,
@@ -73,15 +73,13 @@ export async function POST(req: Request) {
       redirectTo: `/business/${business.slug}/dashboard`,
     });
 
-    // 🍪 Cookie segura
-    res.cookies.set({
-      name: "session",
-      value: token,
+    // 🍪 Guardar cookie
+    res.cookies.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 días
+      maxAge: 60 * 60 * 24 * 30,
     });
 
     return res;
