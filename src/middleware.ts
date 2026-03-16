@@ -19,13 +19,14 @@ export function middleware(req: NextRequest) {
   }
 
   // -----------------------------
-  // CHECK SESSION COOKIE
+  // READ COOKIE MANUALLY
   // -----------------------------
-  const session = req.cookies.get("owner_session")?.value;
+  const cookieHeader = req.headers.get("cookie") || "";
 
-  if (!session) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+  const hasSession = cookieHeader.includes("owner_session=");
+
+  if (!hasSession) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
