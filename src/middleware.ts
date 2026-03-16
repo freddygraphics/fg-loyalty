@@ -21,10 +21,11 @@ export function middleware(req: NextRequest) {
   // -----------------------------
   // CHECK SESSION COOKIE
   // -----------------------------
-  const session = req.cookies.get("session");
+  const session = req.cookies.get("session")?.value;
 
   if (!session) {
     const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 

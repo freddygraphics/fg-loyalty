@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     const email = String(body.email || "")
       .toLowerCase()
       .trim();
+
     const password = String(body.password || "");
 
     if (!email || !password) {
@@ -62,19 +63,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔐 Crear JWT
+    // 🔐 Crear token sesión
     const token = createSession({
       userId: user.id,
       businessId: business.id,
     });
 
-    const res = NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      redirectTo: `/business/${business.slug}/dashboard`,
+      redirect: `/business/${business.slug}/dashboard`,
     });
 
-    // 🍪 Guardar cookie
-    res.cookies.set("session", token, {
+    // 🍪 Cookie sesión
+    response.cookies.set({
+      name: "session",
+      value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -82,7 +85,7 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 30,
     });
 
-    return res;
+    return response;
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 
