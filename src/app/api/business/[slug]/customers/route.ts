@@ -9,13 +9,14 @@ export async function GET(
   try {
     const { slug } = await params;
 
+    // validar sesión
     const session = await getBusinessSession();
 
     if (!session) {
       return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
     }
 
-    // buscar negocio por slug
+    // buscar negocio
     const business = await prisma.business.findUnique({
       where: { slug },
       select: { id: true },
@@ -28,6 +29,10 @@ export async function GET(
       );
     }
 
+    // 🔥 VALIDACIÓN CLAVE
+    if (business.id !== session.businessId) {
+      return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
+    }
     // buscar customers
     const customers = await prisma.customer.findMany({
       where: {

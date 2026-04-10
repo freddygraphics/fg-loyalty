@@ -28,7 +28,9 @@ export default function CustomersPage() {
 
     async function loadCustomers() {
       try {
-        const res = await fetch(`/api/business/${slug}/customers`);
+        const res = await fetch(`/api/business/${slug}/customers`, {
+          credentials: "include",
+        });
 
         if (!res.ok) throw new Error("Failed to load customers");
 
@@ -96,7 +98,7 @@ export default function CustomersPage() {
           </thead>
 
           <tbody>
-            {customers.length === 0 ? (
+            {filteredCustomers.length === 0 ? (
               <tr>
                 <td colSpan={4} className="p-10 text-center text-gray-500">
                   No customers yet
@@ -153,7 +155,7 @@ export default function CustomersPage() {
       </div>
       {/* MOBILE CARDS */}
       <div className="md:hidden space-y-3">
-        {customers.length === 0 ? (
+        {filteredCustomers.length === 0 ? (
           <div className="text-center text-gray-500 p-10">No customers yet</div>
         ) : (
           customers.map((c) => (

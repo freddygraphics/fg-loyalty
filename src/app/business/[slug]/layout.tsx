@@ -1,6 +1,6 @@
 import prisma from "@/lib/db";
 import { cookies } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { verifySessionToken } from "@/lib/session";
 
 export default async function BusinessLayout({
@@ -15,31 +15,40 @@ export default async function BusinessLayout({
   const cookieStore = await cookies();
   const token = cookieStore.get("owner_session")?.value;
 
+  // ❌ No hay sesión
   if (!token) {
     redirect("/login");
   }
 
+  // ❌ Token inválido
   const session = verifySessionToken(token);
-
   if (!session) {
     redirect("/login");
   }
 
+  // 🔍 Buscar negocio
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
       id: true,
-      slug: true,
       name: true,
+      status: true,
     },
   });
 
+  // ❌ No existe
   if (!business) {
     notFound();
   }
 
+  // ❌ Multi-tenant protection
   if (business.id !== session.businessId) {
     redirect("/login");
+  }
+
+  // 💳 Control SaaS (Stripe)
+  if (business.status !== "ACTIVE" && business.status !== "TRIALING") {
+    redirect(`/business/${slug}/billing`);
   }
 
   return <>{children}</>;

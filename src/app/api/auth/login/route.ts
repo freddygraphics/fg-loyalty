@@ -53,7 +53,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const business = user.businesses?.[0];
+    const slug = String(body.slug || "");
+
+    const business = user.businesses.find((b) => b.slug === slug);
 
     if (!business) {
       return NextResponse.json(
@@ -73,13 +75,12 @@ export async function POST(req: Request) {
     });
 
     response.cookies.set({
-      name: "owner_session",
+      name: "session", // 🔥 obligatorio
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // 🔥 en localhost
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
     });
 
     return response;
