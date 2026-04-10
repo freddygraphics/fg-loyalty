@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Rutas públicas
   if (
     pathname === "/" ||
     pathname.startsWith("/login") ||
@@ -15,15 +17,19 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = req.cookies.get("owner_session")?.value;
+  const token = req.cookies.get("owner_session")?.value;
 
-  if (!session) {
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.AUTH_SECRET!);
+    console.log("TOKEN OK:", decoded);
+  } catch (err) {
+    console.log("TOKEN INVALIDO");
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
 }
-
-export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-};
