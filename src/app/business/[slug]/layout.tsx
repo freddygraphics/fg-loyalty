@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
-import { getSession } from "@/lib/getSession";
-import { redirect } from "next/navigation";
-import type { Business } from "@prisma/client";
+import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { verifySessionToken } from "@/lib/session";
 
 export default async function BusinessLayout({
   children,
@@ -12,56 +12,35 @@ export default async function BusinessLayout({
 }) {
   const { slug } = await params;
 
-  const isDev = process.env.NODE_ENV === "development";
+  const cookieStore = await cookies();
+  const token = cookieStore.get("owner_session")?.value;
 
-  let business: Business | null = null;
-
-  const session = await getSession();
-
-  if (isDev) {
-    business = await prisma.business.findUnique({
-      where: { slug },
-    });
-  } else {
-    if (!session) {
-      redirect("/login");
-    }
-
-    business = await prisma.business.findFirst({
-      where: {
-        slug,
-        id: session.businessId,
-      },
-    });
+  if (!token) {
+    redirect("/login");
   }
+
+  const session = verifySessionToken(token);
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+    },
+  });
 
   if (!business) {
+    notFound();
+  }
+
+  if (business.id !== session.businessId) {
     redirect("/login");
   }
 
-  if (!isDev && session && session.businessId !== business.id) {
-    redirect("/login");
-  }
-
-  const now = new Date();
-
-  const trialValid =
-    business.status === "TRIALING" &&
-    business.trialEndsAt &&
-    business.trialEndsAt > now;
-
-  const subscriptionActive =
-    business.status === "ACTIVE" &&
-    business.currentPeriodEnd &&
-    business.currentPeriodEnd > now;
-
-  if (!isDev && !trialValid && !subscriptionActive) {
-    redirect("/pricing");
-  }
-
-  return (
-    <div className="min-h-screen bg-white">
-      <main className="mx-auto max-w-7xl p-6">{children}</main>
-    </div>
-  );
+  return <>{children}</>;
 }

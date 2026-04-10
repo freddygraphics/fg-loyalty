@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const res = NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true });
 
-  res.cookies.set({
-    name: "session",
+  response.cookies.set({
+    name: "owner_session",
     value: "",
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -13,5 +13,5 @@ export async function POST() {
     maxAge: 0,
   });
 
-  return res;
+  return response;
 }

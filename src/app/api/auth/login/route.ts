@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
-import { createSession } from "@/lib/session";
+import { createSessionToken } from "@/lib/session";
 
 const ownerLoginSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
@@ -23,12 +23,11 @@ export async function POST(req: Request) {
     const email = String(body.email || "")
       .toLowerCase()
       .trim();
-
     const password = String(body.password || "");
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Email y contraseña son requeridos" },
         { status: 400 },
       );
     }
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
 
     if (!user || !user.password) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Credenciales inválidas" },
         { status: 401 },
       );
     }
@@ -49,7 +48,7 @@ export async function POST(req: Request) {
 
     if (!passwordValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Credenciales inválidas" },
         { status: 401 },
       );
     }
@@ -58,13 +57,12 @@ export async function POST(req: Request) {
 
     if (!business) {
       return NextResponse.json(
-        { error: "No business associated with this account" },
+        { error: "Esta cuenta no tiene negocio asociado" },
         { status: 404 },
       );
     }
 
-    // 🔐 Crear token sesión
-    const token = createSession({
+    const token = createSessionToken({
       userId: user.id,
       businessId: business.id,
     });
@@ -74,13 +72,12 @@ export async function POST(req: Request) {
       redirect: `/business/${business.slug}/dashboard`,
     });
 
-    // 🍪 Cookie sesión
     response.cookies.set({
       name: "owner_session",
       value: token,
       httpOnly: true,
-      secure: true, // obligatorio en producción
-      sameSite: "lax", // importante para Vercel Edge
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
