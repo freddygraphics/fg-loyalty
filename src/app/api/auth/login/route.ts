@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       value: token,
       httpOnly: true,
       secure: true, // obligatorio en producción
-      sameSite: "none", // importante para Vercel Edge
+      sameSite: "lax", // importante para Vercel Edge
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
