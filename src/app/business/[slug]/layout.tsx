@@ -1,6 +1,6 @@
 import prisma from "@/lib/db";
 import { cookies } from "next/headers";
-import { redirect, notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/session";
 
 export default async function BusinessLayout({
@@ -29,9 +29,6 @@ export default async function BusinessLayout({
     where: { slug },
     select: {
       id: true,
-      name: true,
-      status: true,
-      trialEndsAt: true,
     },
   });
 
@@ -39,26 +36,9 @@ export default async function BusinessLayout({
     notFound();
   }
 
-  // Impide acceder al negocio de otro usuario
+  // Impide entrar al negocio de otro usuario
   if (business.id !== session.businessId) {
     redirect("/login");
-  }
-
-  // El tiempo actual es necesario para validar el vencimiento del trial
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
-
-  const trialExpired =
-    business.status === "TRIALING" &&
-    business.trialEndsAt !== null &&
-    business.trialEndsAt.getTime() <= now;
-
-  if (trialExpired) {
-    redirect(`/business/${slug}/billing?reason=trial_expired`);
-  }
-
-  if (business.status !== "ACTIVE" && business.status !== "TRIALING") {
-    redirect(`/business/${slug}/billing`);
   }
 
   return <>{children}</>;
