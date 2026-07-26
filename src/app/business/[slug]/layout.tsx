@@ -13,40 +13,50 @@ export default async function BusinessLayout({
   const { slug } = await params;
 
   const cookieStore = await cookies();
-  const token = cookieStore.get("owner_session")?.value;
+  const token = cookieStore.get("session")?.value;
 
-  // ❌ No hay sesión
   if (!token) {
     redirect("/login");
   }
 
-  // ❌ Token inválido
   const session = verifySessionToken(token);
+
   if (!session) {
     redirect("/login");
   }
 
-  // 🔍 Buscar negocio
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
       id: true,
       name: true,
       status: true,
+      trialEndsAt: true,
     },
   });
 
-  // ❌ No existe
   if (!business) {
     notFound();
   }
 
-  // ❌ Multi-tenant protection
+  // Impide acceder al negocio de otro usuario
   if (business.id !== session.businessId) {
     redirect("/login");
   }
 
-  // 💳 Control SaaS (Stripe)
+  // El tiempo actual es necesario para validar el vencimiento del trial
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+
+  const trialExpired =
+    business.status === "TRIALING" &&
+    business.trialEndsAt !== null &&
+    business.trialEndsAt.getTime() <= now;
+
+  if (trialExpired) {
+    redirect(`/business/${slug}/billing?reason=trial_expired`);
+  }
+
   if (business.status !== "ACTIVE" && business.status !== "TRIALING") {
     redirect(`/business/${slug}/billing`);
   }

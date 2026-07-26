@@ -1,29 +1,44 @@
 import { cookies } from "next/headers";
 import prisma from "@/lib/db";
+import { verifySessionToken } from "@/lib/session";
 
 export async function getBusinessSession() {
   const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const token = cookieStore.get("session")?.value;
 
-  if (!userId) return null;
+  if (!token) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { businesses: true },
+  const session = verifySessionToken(token);
+
+  if (!session) return null;
+
+  const business = await prisma.business.findFirst({
+    where: {
+      id: session.businessId,
+      owner: {
+        id: session.userId,
+      },
+    },
+    select: {
+      id: true,
+      slug: true,
+      status: true,
+      trialEndsAt: true,
+    },
   });
 
-  if (!user || user.businesses.length === 0) return null;
-
-  const business = user.businesses[0];
+  if (!business) return null;
 
   const trialExpired =
     business.status === "TRIALING" &&
-    business.trialEndsAt &&
-    new Date() > business.trialEndsAt;
+    business.trialEndsAt !== null &&
+    business.trialEndsAt.getTime() <= Date.now();
 
   return {
-    userId: user.id,
+    userId: session.userId,
     businessId: business.id,
+    slug: business.slug,
+    status: business.status,
     trialExpired,
   };
 }

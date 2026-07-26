@@ -1,6 +1,10 @@
 import jwt from "jsonwebtoken";
 
-const AUTH_SECRET = process.env.AUTH_SECRET!; // 🔥 FIX
+const AUTH_SECRET: string =
+  process.env.AUTH_SECRET ??
+  (() => {
+    throw new Error("AUTH_SECRET is not configured");
+  })();
 
 export type SessionPayload = {
   userId: string;
@@ -21,18 +25,18 @@ export function verifySessionToken(token: string): SessionPayload | null {
     });
 
     if (
-      typeof decoded === "object" &&
-      decoded !== null &&
-      "userId" in decoded &&
-      "businessId" in decoded
+      typeof decoded !== "object" ||
+      decoded === null ||
+      !("userId" in decoded) ||
+      !("businessId" in decoded)
     ) {
-      return {
-        userId: String(decoded.userId),
-        businessId: String(decoded.businessId),
-      };
+      return null;
     }
 
-    return null;
+    return {
+      userId: String(decoded.userId),
+      businessId: String(decoded.businessId),
+    };
   } catch {
     return null;
   }
