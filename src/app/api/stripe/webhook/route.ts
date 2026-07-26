@@ -190,7 +190,9 @@ export async function POST(req: Request) {
             ? new Date(subscription.trial_end * 1000)
             : null;
           currentPeriodEnd = getSubscriptionPeriodEnd(subscription);
-          cancelAtPeriodEnd = subscription.cancel_at_period_end;
+          cancelAtPeriodEnd =
+            subscription.cancel_at_period_end ||
+            subscription.cancel_at !== null;
         }
 
         const result = await prisma.business.updateMany({
@@ -244,7 +246,9 @@ export async function POST(req: Request) {
               ? new Date(subscription.trial_end * 1000)
               : null,
             currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            cancelAtPeriodEnd:
+              subscription.cancel_at_period_end ||
+              subscription.cancel_at !== null,
           },
         });
 
@@ -280,7 +284,9 @@ export async function POST(req: Request) {
               ? new Date(subscription.trial_end * 1000)
               : null,
             currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            cancelAtPeriodEnd:
+              subscription.cancel_at_period_end ||
+              subscription.cancel_at !== null,
           },
         });
 
