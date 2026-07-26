@@ -31,9 +31,11 @@ model User {
   email    String @unique
   password String
 
-  businesses Business[] @relation("BusinessOwner")
-
+  businesses   Business[]         @relation("BusinessOwner")
   transactions PointTransaction[]
+
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
 
   createdAt DateTime @default(now())
 }
@@ -44,15 +46,16 @@ model PlatformAdmin {
   role      String
   createdAt DateTime @default(now())
 }
+
 model Business {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
 
   // PLAN
 
-  plan      PlanType @default(STARTER)
-  status    SubscriptionStatus @default(TRIALING)
+  plan   PlanType           @default(STARTER)
+  status SubscriptionStatus @default(TRIALING)
 
   // STRIPE
 
@@ -67,18 +70,18 @@ model Business {
 
   // LOYALTY SYSTEM
 
-  goal      Int @default(10)
-  earnStep  Int @default(1)
-  limitMode String @default("cap")
+  goal       Int    @default(10)
+  earnStep   Int    @default(1)
+  limitMode  String @default("cap")
   redeemMode String @default("subtract")
 
   // RELATIONS
 
-  ownerId   String
-  owner     User @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+  owner   User   @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  customers Customer[]
-  cards     LoyaltyCard[]
+  customers    Customer[]
+  cards        LoyaltyCard[]
   transactions PointTransaction[]
 
   // META
@@ -88,8 +91,6 @@ model Business {
   @@index([ownerId])
   @@index([subscriptionId])
 }
-
-
 
 model Customer {
   id         String  @id @default(cuid())
@@ -109,12 +110,12 @@ model Customer {
 }
 
 model LoyaltyCard {
-  id         String @id @default(cuid())
-  token      String @unique @default(cuid()) // 👈 AGREGAR ESTO
+  id         String    @id @default(cuid())
+  token      String    @unique @default(cuid()) // 👈 AGREGAR ESTO
   businessId String
   customerId String
-  points     Int    @default(0)
-lastScanAt DateTime?
+  points     Int       @default(0)
+  lastScanAt DateTime?
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -127,7 +128,6 @@ lastScanAt DateTime?
   @@index([businessId])
   @@index([customerId])
 }
-
 
 model PointTransaction {
   id         String  @id @default(cuid())
@@ -149,6 +149,7 @@ model PointTransaction {
   @@index([cardId])
   @@index([userId])
 }
+
 model StripeWebhookEvent {
   id        String   @id
   createdAt DateTime @default(now())
