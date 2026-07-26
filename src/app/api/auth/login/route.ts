@@ -53,9 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const slug = String(body.slug || "");
-
-    const business = user.businesses.find((b) => b.slug === slug);
+    const business = user.businesses?.[0];
 
     if (!business) {
       return NextResponse.json(

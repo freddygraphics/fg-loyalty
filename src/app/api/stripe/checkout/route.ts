@@ -1,40 +1,74 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
-  const { businessId, email } = await req.json();
+  try {
+    const { businessId, email } = await req.json();
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
+    const priceId = process.env.STRIPE_STARTER_PRICE_ID;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-    customer_email: email,
+    if (!businessId || !email) {
+      return NextResponse.json(
+        { error: "businessId and email are required" },
+        { status: 400 },
+      );
+    }
 
-    // ayuda a identificar el negocio
-    client_reference_id: businessId,
+    if (!priceId || !appUrl) {
+      console.error("Missing Stripe Checkout environment variables");
 
-    metadata: {
-      businessId,
-    },
+      return NextResponse.json(
+        { error: "Stripe Checkout is not configured" },
+        { status: 500 },
+      );
+    }
 
-    line_items: [
-      {
-        price: process.env.STRIPE_STARTER_PRICE_ID!,
-        quantity: 1,
-      },
-    ],
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: email,
+      client_reference_id: businessId,
 
-    subscription_data: {
-      trial_period_days: 7,
       metadata: {
         businessId,
       },
-    },
 
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
-  });
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
 
-  return NextResponse.json({ url: session.url });
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: {
+          businessId,
+        },
+      },
+
+      success_url: `${appUrl}/dashboard?success=true`,
+      cancel_url: `${appUrl}/pricing`,
+    });
+
+    if (!session.url) {
+      throw new Error("Stripe Checkout did not return a URL");
+    }
+
+    return NextResponse.json({
+      url: session.url,
+    });
+  } catch (error) {
+    console.error("Stripe Checkout error:", error);
+
+    return NextResponse.json(
+      { error: "Could not create Checkout session" },
+      { status: 500 },
+    );
+  }
 }

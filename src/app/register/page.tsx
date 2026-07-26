@@ -38,7 +38,14 @@ export default function RegisterPage() {
         return;
       }
 
-      window.location.href = data.stripeUrl;
+      // 🔥 FIX PRO
+      if (data.stripeUrl) {
+        window.location.href = data.stripeUrl;
+      } else if (data.redirect) {
+        router.push(data.redirect);
+      } else {
+        router.push("/dashboard");
+      }
       // ✅ coherente con API
     } catch (err) {
       setError("Unexpected error. Try again.");

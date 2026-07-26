@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import Stripe from "stripe";
-
+import { createSessionToken } from "@/lib/session";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // convierte nombre a slug
@@ -46,57 +46,76 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const slug = uniqueSlug(businessName);
 
-    // 👤 Create user
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: email.toLowerCase().trim(),
+          password: hashedPassword,
+        },
+      });
+
+      const business = await tx.business.create({
+        data: {
+          name: businessName,
+          slug,
+          owner: {
+            connect: { id: user.id },
+          },
+          plan: "STARTER",
+          status: "CANCELED",
+        },
+      });
+
+      return { user, business };
     });
 
-    // 🏪 Create business (sin trial manual)
-    const business = await prisma.business.create({
-      data: {
-        name: businessName,
-        slug,
-        ownerId: user.id,
-        plan: "STARTER",
-        status: "CANCELED", // hasta que Stripe lo active
-      },
-    });
+    const user = result.user;
+    const business = result.business;
 
     // 🔐 Auto-login cookie
     const cookieStore = await cookies();
-    cookieStore.set("userId", user.id, {
+
+    const token = createSessionToken({
+      userId: user.id,
+      businessId: business.id,
+    });
+
+    cookieStore.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
     });
-
     // 💳 Crear Stripe Checkout con trial 7 días
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer_email: user.email,
-      line_items: [
-        {
-          price: process.env.STRIPE_STARTER_PRICE_ID!,
-          quantity: 1,
-        },
-      ],
-      subscription_data: {
-        trial_period_days: 7,
-        metadata: {
-          businessId: business.id,
-        },
-      },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/business/${business.slug}/dashboard`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
-    });
+    let stripeUrl = null;
 
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer_email: user.email,
+        line_items: [
+          {
+            price: process.env.STRIPE_STARTER_PRICE_ID!,
+            quantity: 1,
+          },
+        ],
+        subscription_data: {
+          trial_period_days: 7,
+          metadata: {
+            businessId: business.id,
+          },
+        },
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/business/${business.slug}/dashboard`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+      });
+
+      stripeUrl = session.url;
+    } catch (stripeError) {
+      console.error("🔥 STRIPE ERROR:", stripeError);
+    }
     return NextResponse.json({
-      stripeUrl: session.url,
+      stripeUrl,
+      redirect: `/business/${business.slug}/dashboard`,
     });
   } catch (err) {
     console.error("Register error:", err);
