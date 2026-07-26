@@ -20,13 +20,15 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch("/api/auth/register", {
-        // ✅ ruta correcta
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          email: form.get("email"),
-          password: form.get("password"),
-          businessName: form.get("businessName"),
+          email: String(form.get("email") || "").trim(),
+          password: String(form.get("password") || ""),
+          businessName: String(form.get("businessName") || "").trim(),
         }),
       });
 
@@ -39,13 +41,13 @@ export default function RegisterPage() {
       }
 
       // 🔥 FIX PRO
-      if (data.stripeUrl) {
-        window.location.href = data.stripeUrl;
-      } else if (data.redirect) {
-        router.push(data.redirect);
-      } else {
-        router.push("/dashboard");
+      if (!data.stripeUrl) {
+        setError("Stripe Checkout URL was not returned.");
+        setLoading(false);
+        return;
       }
+
+      window.location.assign(data.stripeUrl);
       // ✅ coherente con API
     } catch (err) {
       setError("Unexpected error. Try again.");

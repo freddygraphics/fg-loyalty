@@ -9,6 +9,7 @@ export function proxy(req: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/stripe/webhook") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   ) {
@@ -16,10 +17,13 @@ export function proxy(req: NextRequest) {
   }
 
   if (pathname.startsWith("/business/")) {
-    const token = req.cookies.get("owner_session")?.value;
+    const token = req.cookies.get("session")?.value;
 
     if (!token) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("from", pathname);
+
+      return NextResponse.redirect(loginUrl);
     }
   }
 

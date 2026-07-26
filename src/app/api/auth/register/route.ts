@@ -87,36 +87,69 @@ export async function POST(req: Request) {
       path: "/",
     });
     // 💳 Crear Stripe Checkout con trial 7 días
-    let stripeUrl = null;
+    const priceId = process.env.STRIPE_STARTER_PRICE_ID;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+    if (!priceId || !appUrl) {
+      console.error("Missing Stripe variables:", {
+        hasPriceId: Boolean(priceId),
+        hasAppUrl: Boolean(appUrl),
+      });
+
+      return NextResponse.json(
+        { error: "Stripe Checkout is not configured" },
+        { status: 500 },
+      );
+    }
 
     try {
-      const session = await stripe.checkout.sessions.create({
+      const checkoutSession = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer_email: user.email,
+        client_reference_id: business.id,
+
+        metadata: {
+          businessId: business.id,
+        },
+
         line_items: [
           {
-            price: process.env.STRIPE_STARTER_PRICE_ID!,
+            price: priceId,
             quantity: 1,
           },
         ],
+
         subscription_data: {
           trial_period_days: 7,
           metadata: {
             businessId: business.id,
           },
         },
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/business/${business.slug}/dashboard`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+
+        success_url: `${appUrl}/business/${business.slug}/dashboard?checkout=success`,
+        cancel_url: `${appUrl}/pricing?checkout=canceled`,
       });
 
-      stripeUrl = session.url;
+      if (!checkoutSession.url) {
+        throw new Error("Stripe did not return a Checkout URL");
+      }
+
+      return NextResponse.json({
+        stripeUrl: checkoutSession.url,
+      });
     } catch (stripeError) {
-      console.error("🔥 STRIPE ERROR:", stripeError);
+      console.error("STRIPE CHECKOUT ERROR:", stripeError);
+
+      return NextResponse.json(
+        {
+          error:
+            stripeError instanceof Error
+              ? stripeError.message
+              : "Could not create Stripe Checkout",
+        },
+        { status: 500 },
+      );
     }
-    return NextResponse.json({
-      stripeUrl,
-      redirect: `/business/${business.slug}/dashboard`,
-    });
   } catch (err) {
     console.error("Register error:", err);
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
