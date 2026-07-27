@@ -2,6 +2,9 @@ import prisma from "@/lib/db";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/session";
+import Topbar from "@/components/dashboard/Topbar";
+
+export const dynamic = "force-dynamic";
 
 export default async function BusinessLayout({
   children,
@@ -29,6 +32,7 @@ export default async function BusinessLayout({
     where: { slug },
     select: {
       id: true,
+      name: true,
     },
   });
 
@@ -41,5 +45,13 @@ export default async function BusinessLayout({
     redirect("/login");
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-[#f7f8fa]">
+      <Topbar businessName={business.name} slug={slug} />
+
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {children}
+      </main>
+    </div>
+  );
 }

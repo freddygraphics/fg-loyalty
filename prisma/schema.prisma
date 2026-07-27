@@ -52,6 +52,16 @@ model Business {
   name String
   slug String @unique
 
+  // BUSINESS PROFILE
+
+  businessEmail String?
+  phone         String?
+  website       String?
+  address       String?
+  city          String?
+  state         String?
+  zipCode       String?
+
   // PLAN
 
   plan   PlanType           @default(STARTER)
@@ -87,6 +97,7 @@ model Business {
   // META
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([ownerId])
   @@index([subscriptionId])

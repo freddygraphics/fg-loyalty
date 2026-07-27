@@ -1,6 +1,7 @@
-import DashboardShell from "@/components/dashboard/DashboardShell";
 import prisma from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
   children,
@@ -14,7 +15,6 @@ export default async function DashboardLayout({
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
-      name: true,
       status: true,
       trialEndsAt: true,
     },
@@ -24,13 +24,14 @@ export default async function DashboardLayout({
     notFound();
   }
 
+  // Necesario para verificar el vencimiento del período de prueba
   // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  const currentTime = Date.now();
 
   const trialExpired =
     business.status === "TRIALING" &&
     business.trialEndsAt !== null &&
-    business.trialEndsAt.getTime() <= now;
+    business.trialEndsAt.getTime() <= currentTime;
 
   if (trialExpired) {
     redirect(`/business/${slug}/billing?reason=trial_expired`);
@@ -40,9 +41,5 @@ export default async function DashboardLayout({
     redirect(`/business/${slug}/billing?reason=subscription_required`);
   }
 
-  return (
-    <DashboardShell slug={slug} businessName={business.name}>
-      {children}
-    </DashboardShell>
-  );
+  return <>{children}</>;
 }
