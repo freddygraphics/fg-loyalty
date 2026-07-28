@@ -1,7 +1,9 @@
 import Link from "next/link";
 import prisma from "@/lib/db";
 import MetricCard from "@/components/dashboard/MetricCard";
-import BusinessQR from "@/components/dashboard/BusinessQR";
+
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   ArrowRight,
   Gift,
@@ -19,7 +21,9 @@ export default async function DashboardPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
+  const dashboard = await getTranslations("Dashboard");
+  const common = await getTranslations("Common");
+  const locale = await getLocale();
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
@@ -32,7 +36,7 @@ export default async function DashboardPage({
   if (!business) {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-        Business not found: {slug}
+        {dashboard("businessNotFound")}: {slug}
       </div>
     );
   }
@@ -90,45 +94,49 @@ export default async function DashboardPage({
   return (
     <div>
       {/* SALUDO */}
-      <section className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">
-          Hola, {business.name} 👋
-        </h1>
+      <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">
+            {dashboard("hello")}, {business.name} 👋
+          </h1>
 
-        <p className="mt-1.5 text-sm text-gray-500 sm:text-base">
-          Aquí tienes el resumen de tu negocio
-        </p>
+          <p className="mt-1.5 text-sm text-gray-500 sm:text-base">
+            {dashboard("summary")}
+          </p>
+        </div>
+
+        <LanguageSwitcher />
       </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-6">
         <div className="min-w-0 space-y-6">
           {/* MÉTRICAS */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <MetricCard
-              title="Scans hoy"
+              title={dashboard("scansToday")}
               value={scansToday}
               icon={<ScanLine size={18} />}
             />
 
             <MetricCard
-              title="Puntos hoy"
+              title={dashboard("pointsToday")}
               value={pointsToday}
               icon={<Gift size={18} />}
             />
 
             <Link
-              href={`/business/${slug}/customers`}
+              href={`/business/${slug}/dashboard/customers`}
               className="block rounded-xl outline-none transition hover:-translate-y-0.5 focus:ring-4 focus:ring-gray-950/10"
             >
               <MetricCard
-                title="Clientes"
+                title={dashboard("customers")}
                 value={customersCount}
                 icon={<Users size={18} />}
               />
             </Link>
 
             <MetricCard
-              title="Meta"
+              title={dashboard("goal")}
               value={business.goal}
               icon={<Target size={18} />}
             />
@@ -144,11 +152,11 @@ export default async function DashboardPage({
 
                 <div>
                   <h2 className="font-semibold text-gray-950">
-                    Historial reciente
+                    {dashboard("recentHistory")}
                   </h2>
 
                   <p className="text-xs text-gray-500">
-                    Últimos movimientos del negocio
+                    {dashboard("latestActivity")}
                   </p>
                 </div>
               </div>
@@ -157,7 +165,7 @@ export default async function DashboardPage({
                 href={`/business/${slug}/history`}
                 className="flex items-center gap-1 text-sm font-semibold text-gray-700 transition hover:text-gray-950"
               >
-                <span className="hidden sm:inline">Ver todo</span>
+                <span className="hidden sm:inline">{dashboard("viewAll")}</span>
                 <ArrowRight size={16} />
               </Link>
             </div>
@@ -169,11 +177,11 @@ export default async function DashboardPage({
                 </span>
 
                 <p className="mt-4 text-sm font-semibold text-gray-800">
-                  Todavía no hay actividad
+                  {dashboard("noActivity")}
                 </p>
 
                 <p className="mt-1 max-w-xs text-sm text-gray-500">
-                  Los puntos y escaneos recientes aparecerán aquí.
+                  {dashboard("noActivityDescription")}
                 </p>
               </div>
             ) : (
@@ -190,17 +198,20 @@ export default async function DashboardPage({
 
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-gray-900">
-                          Puntos registrados
+                          {dashboard("pointsRegistered")}
                         </p>
 
                         <p className="text-xs text-gray-500">
-                          {new Intl.DateTimeFormat("es-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          }).format(transaction.createdAt)}
+                          {new Intl.DateTimeFormat(
+                            locale === "es" ? "es-US" : "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            },
+                          ).format(transaction.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -221,23 +232,6 @@ export default async function DashboardPage({
             )}
           </section>
         </div>
-
-        {/* QR */}
-        <aside className="self-start overflow-hidden rounded-2xl border border-[#e8e8e8] bg-white">
-          <div className="border-b border-[#ededed] bg-[#fbfbfb] px-5 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Código del negocio
-            </p>
-
-            <h2 className="mt-1 text-lg font-semibold text-gray-950">
-              {business.name}
-            </h2>
-          </div>
-
-          <div className="flex justify-center p-6">
-            <BusinessQR slug={slug} />
-          </div>
-        </aside>
       </div>
     </div>
   );

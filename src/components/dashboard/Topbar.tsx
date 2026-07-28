@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Settings,
+  QrCode,
   UserRound,
 } from "lucide-react";
 
@@ -109,6 +110,13 @@ export default function Topbar({
               >
                 <UserRound size={17} />
                 Account
+              </Link>
+              <Link
+                href={`/business/${slug}/dashboard/flyers`}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                <QrCode size={18} />
+                My QR
               </Link>
               <button
                 type="button"
