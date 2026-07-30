@@ -4,6 +4,9 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { createSessionToken } from "@/lib/session";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const ownerLoginSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
   email: true,
@@ -23,7 +26,9 @@ export async function POST(req: Request) {
     const email = String(body.email || "")
       .toLowerCase()
       .trim();
+
     const password = String(body.password || "");
+    const mobile = Boolean(body.mobile);
 
     if (!email || !password) {
       return NextResponse.json(
@@ -69,6 +74,9 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
+      token: mobile ? token : undefined,
+      businessId: business.id,
+      slug: business.slug,
       redirect: `/business/${business.slug}/dashboard`,
     });
 
