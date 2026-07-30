@@ -1,22 +1,55 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/db";
 import { TxType } from "@prisma/client";
+import { verifySessionToken } from "@/lib/session";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { qr } = body;
+    // =========================================================
+    // 1. Validar sesión enviada por la aplicación
+    // =========================================================
+    const authorization = req.headers.get("authorization");
 
-    // 1️⃣ Validar QR
-    if (!qr || typeof qr !== "string") {
+    if (!authorization?.startsWith("Bearer ")) {
+      return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    }
+
+    const token = authorization.replace("Bearer ", "").trim();
+    const session = verifySessionToken(token);
+
+    if (!session?.businessId) {
+      return Response.json({ error: "INVALID_SESSION" }, { status: 401 });
+    }
+
+    // =========================================================
+    // 2. Validar contenido recibido
+    // =========================================================
+    const body = await req.json();
+    const qr = String(body?.qr || "").trim();
+
+    if (!qr) {
       return Response.json({ error: "QR_REQUIRED" }, { status: 400 });
     }
 
+    // =========================================================
+    // 3. Procesar escaneo
+    // =========================================================
     const result = await prisma.$transaction(async (tx) => {
-      // 2️⃣ Buscar tarjeta + negocio (LOCK LÓGICO)
       const card = await tx.loyaltyCard.findUnique({
-        where: { token: qr },
-        include: { business: true },
+        where: {
+          token: qr,
+        },
+        include: {
+          business: true,
+          customer: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
 
       if (!card) {
@@ -25,7 +58,11 @@ export async function POST(req: NextRequest) {
 
       const business = card.business;
 
-      // 3️⃣ Validar configuración
+      // El empleado solo puede escanear tarjetas de su negocio
+      if (business.id !== session.businessId) {
+        throw new Error("QR_NOT_FROM_THIS_BUSINESS");
+      }
+
       if (!business.earnStep || business.earnStep <= 0) {
         throw new Error("EARN_STEP_NOT_DEFINED");
       }
@@ -34,10 +71,12 @@ export async function POST(req: NextRequest) {
         throw new Error("GOAL_NOT_DEFINED");
       }
 
-      // 4️⃣ Anti doble scan REAL (backend)
+      // Evitar escaneos repetidos muy rápidos
       if (card.lastScanAt) {
-        const diff = Date.now() - card.lastScanAt.getTime();
-        if (diff < 3000) {
+        const millisecondsSinceLastScan =
+          Date.now() - card.lastScanAt.getTime();
+
+        if (millisecondsSinceLastScan < 3000) {
           throw new Error("SCAN_TOO_FAST");
         }
       }
@@ -45,7 +84,9 @@ export async function POST(req: NextRequest) {
       let pointsToAdd = business.earnStep;
       let reachedGoal = false;
 
-      // 5️⃣ Limit mode: CAP
+      // =======================================================
+      // Limit mode: cap
+      // =======================================================
       if (business.limitMode === "cap") {
         if (card.points >= business.goal) {
           throw new Error("GOAL_REACHED");
@@ -55,50 +96,68 @@ export async function POST(req: NextRequest) {
           pointsToAdd = business.goal - card.points;
           reachedGoal = true;
         }
+      } else {
+        reachedGoal = card.points + pointsToAdd >= business.goal;
       }
 
-      // 6️⃣ Actualizar tarjeta (MISMA TRANSACCIÓN)
+      // =======================================================
+      // Actualizar puntos
+      // =======================================================
       const updatedCard = await tx.loyaltyCard.update({
-        where: { id: card.id },
+        where: {
+          id: card.id,
+        },
         data: {
           points: card.points + pointsToAdd,
           lastScanAt: new Date(),
         },
       });
 
-      // 7️⃣ Registrar transacción
+      // =======================================================
+      // Registrar movimiento para el historial
+      // =======================================================
       await tx.pointTransaction.create({
         data: {
           businessId: business.id,
           cardId: card.id,
           type: TxType.EARN,
-
           points: pointsToAdd,
           note: "Scan earn",
         },
       });
 
-      // 8️⃣ Redeem mode: RESET
-      if (reachedGoal && business.redeemMode === "reset") {
+      let totalPoints = updatedCard.points;
+      const redeemed = reachedGoal && business.redeemMode === "reset";
+
+      // =======================================================
+      // Redeem mode: reset
+      // =======================================================
+      if (redeemed) {
         await tx.loyaltyCard.update({
-          where: { id: card.id },
-          data: { points: 0 },
+          where: {
+            id: card.id,
+          },
+          data: {
+            points: 0,
+          },
         });
+
+        totalPoints = 0;
       }
 
-      // 9️⃣ Resultado final
       return {
+        customerName: card.customer.name,
         pointsAdded: pointsToAdd,
-        totalPoints:
-          reachedGoal && business.redeemMode === "reset"
-            ? 0
-            : updatedCard.points,
+        totalPoints,
         reachedGoal,
-        redeemed: reachedGoal && business.redeemMode === "reset",
+        redeemed,
       };
     });
 
-    return Response.json({ ok: true, ...result });
+    return Response.json({
+      ok: true,
+      ...result,
+    });
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : "UNKNOWN_ERROR";
 
@@ -111,6 +170,7 @@ export async function POST(req: NextRequest) {
         "GOAL_REACHED",
         "EARN_STEP_NOT_DEFINED",
         "GOAL_NOT_DEFINED",
+        "QR_NOT_FROM_THIS_BUSINESS",
       ].includes(error)
     ) {
       return Response.json({ error }, { status: 400 });

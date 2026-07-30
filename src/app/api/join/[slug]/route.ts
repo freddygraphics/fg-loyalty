@@ -70,16 +70,16 @@ export async function POST(
     });
 
     // 🔁 Cliente duplicado → devolver su QR
-    if (existing?.cards?.length) {
-      const card = existing.cards[0];
-
-      return NextResponse.json({
-        success: true,
-        customerId: existing.id,
-        cardToken: card.token,
-        points: card.points,
-        duplicated: true,
-      });
+    // ❌ El teléfono ya está registrado
+    if (existing) {
+      return NextResponse.json(
+        {
+          error: "PHONE_ALREADY_REGISTERED",
+        },
+        {
+          status: 409,
+        },
+      );
     }
 
     // 3️⃣ Crear cliente
@@ -105,8 +105,10 @@ export async function POST(
     return NextResponse.json({
       success: true,
       customerId: customer.id,
+      customerName: customer.name,
       cardToken: card.token,
       points: card.points,
+      duplicated: false,
     });
   } catch (error) {
     console.error("❌ JOIN ERROR:", error);

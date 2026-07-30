@@ -11,7 +11,8 @@ type PageProps = {
 
 export default function JoinPage({ params }: PageProps) {
   const { slug } = use(params);
-
+  const [customerName, setCustomerName] = useState("");
+  const [duplicated, setDuplicated] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,38 +33,53 @@ export default function JoinPage({ params }: PageProps) {
     setLoading(false);
 
     if (!res.ok) {
-      alert(data.error || "Error registering");
+      if (data.error === "PHONE_ALREADY_REGISTERED") {
+        alert(
+          "This phone number is already registered. Please use your existing loyalty card.",
+        );
+      } else {
+        alert(data.error || "Error registering");
+      }
+
       return;
     }
 
     setCardToken(data.cardToken);
+    setCustomerName(data.customerName || name);
+    setDuplicated(Boolean(data.duplicated));
     setSuccess(true);
   }
 
   // ✅ CUANDO YA SE REGISTRÓ → MOSTRAR TARJETA
   if (success && cardToken) {
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ?? "https://getfideliza.com";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://getfideliza.com";
 
     const cardUrl = `${appUrl}/scan/${cardToken}`;
 
     function sendWhatsApp() {
       const text = encodeURIComponent(
         `🎉 Welcome to our loyalty program!\n\n` +
-          `👤 Name: ${name}\n` +
+          `👤 Name: ${customerName}\n` +
           `🏪 Business: ${slug.replace("-", " ")}\n\n` +
           `🔗 Your loyalty card:\n${cardUrl}\n\n` +
           `⭐ Show this QR every time you visit`,
       );
 
-      window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+      const normalizedPhone = phone.replace(/\D/g, "");
+
+      window.open(`https://wa.me/${normalizedPhone}?text=${text}`, "_blank");
     }
 
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white p-6 rounded-xl text-center space-y-4 shadow w-full max-w-sm">
           <h1 className="text-xl font-bold">🎉 Welcome!</h1>
-
+          {duplicated && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              This phone number is already registered. We found the existing
+              loyalty card for <strong>{customerName}</strong>.
+            </div>
+          )}
           <p className="text-sm text-gray-600">This is your loyalty card</p>
 
           <QRCode value={cardUrl} size={200} />

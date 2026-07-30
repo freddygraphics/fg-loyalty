@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-
+import { useTranslations } from "next-intl";
 type CustomerRow = {
   id: number;
   name: string;
@@ -19,7 +19,8 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-
+  const customersT = useTranslations("Customers");
+  const common = useTranslations("Common");
   const [page, setPage] = useState(1);
   const perPage = 10;
 
@@ -67,7 +68,7 @@ export default function CustomersPage() {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto p-6 text-gray-500">
-        Loading customers...
+        {customersT("loadingCustomers")}
       </div>
     );
   }
